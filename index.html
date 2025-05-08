@@ -1,170 +1,457 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Labirinto Geométrico</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f0f4f8;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #333;
-    }
-    .labirinto {
-      display: grid;
-      grid-template-columns: repeat(5, 100px);
-      grid-template-rows: repeat(5, 100px);
-      gap: 5px;
-      margin: 30px auto;
-      max-width: 600px;
-    }
-    .bloco {
-      width: 100px;
-      height: 100px;
-      background-color: #cfe2f3;
-      border: 1px solid #aaa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
-    .personagem {
-      background-color: #ffeb3b;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-    }
-    .porta {
-      background-color: #80deea;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-    .parede {
-      background-color: #b0bec5;
-    }
-    .mensagem {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #2e7d32;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirinto Geométrico</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f4f8;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            position: relative;
+        }
+        h1 {
+            color: #333;
+        }
+        .info-nivel {
+            font-size: 20px;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .labirinto-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .labirinto {
+            display: grid;
+            gap: 3px;
+            margin: 0 auto;
+            background-color: #78909c;
+            padding: 3px;
+            border-radius: 5px;
+        }
+        .bloco {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .bloco:hover {
+            opacity: 0.8;
+        }
+        .caminho {
+            background-color: #80deea;
+        }
+        .parede {
+            background-color: #b0bec5;
+            cursor: not-allowed;
+        }
+        .personagem {
+            background-color: #ffeb3b;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        .saida {
+            background-color: #a5d6a7;
+            animation: pulse 1.5s infinite;
+        }
+        .mensagem {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 27px;
+        }
+        .mensagem.acerto {
+            color: #2e7d32;
+        }
+        .mensagem.erro {
+            color: #d32f2f;
+        }
+        
+        /* Modal de Pergunta */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .pergunta {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .opcoes-resposta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .opcao {
+            padding: 10px;
+            background-color: #e3f2fd;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .opcao:hover {
+            background-color: #bbdefb;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @media (max-width: 600px) {
+            .bloco {
+                width: 40px;
+                height: 40px;
+            }
+            .personagem {
+                width: 30px;
+                height: 30px;
+            }
+            .opcoes-resposta {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>Labirinto Geométrico</h1>
-  <p>Use as setas para mover. Responda as perguntas nas portas para avançar!</p>
-  <div id="labirinto" class="labirinto"></div>
-  <div id="mensagem" class="mensagem"></div>
-
-  <script>
-    const labirintoElement = document.getElementById('labirinto');
-    const mensagemElement = document.getElementById('mensagem');
+    <h1>Labirinto Geométrico</h1>
+    <div class="info-nivel">Nível: <span id="nivel-atual">1</span></div>
+    <p>Clique nos quadrados azuis para responder perguntas e chegar até a saída verde!</p>
     
-    const labirinto = [
-      ['P', 'P', 'P', 'P', 'P'],
-      ['P', ' ', 'P', ' ', 'P'],
-      ['P', ' ', 'P', ' ', 'P'],
-      ['P', ' ', ' ', ' ', 'P'],
-      ['P', 'P', 'P', ' ', 'P'],
-    ];
+    <div class="labirinto-container">
+        <div id="labirinto" class="labirinto"></div>
+    </div>
+    
+    <div id="mensagem" class="mensagem"></div>
 
-    const perguntas = [
-      {
-        pergunta: 'Qual sólido tem 6 faces quadradas?',
-        respostas: ['Cubo', 'Pirâmide', 'Esfera'],
-        correta: 0, 
-      },
-      {
-        pergunta: 'Qual sólido tem bases circulares?',
-        respostas: ['Cilindro', 'Cubo', 'Pirâmide'],
-        correta: 0,
-      },
-      {
-        pergunta: 'Qual sólido tem faces triangulares?',
-        respostas: ['Pirâmide', 'Cilindro', 'Paralelepípedo'],
-        correta: 0,
-      },
-    ];
+    <!-- Modal de Pergunta -->
+    <div id="modal-pergunta" class="modal">
+        <div class="modal-content">
+            <div id="texto-pergunta" class="pergunta"></div>
+            <div id="opcoes-resposta" class="opcoes-resposta"></div>
+        </div>
+    </div>
 
-    let personagemPos = { x: 1, y: 1 };
-    let perguntaAtual = 0;
-    let jogoAtivo = true;
+    <script>
+        // Elementos do DOM
+        const labirintoElement = document.getElementById('labirinto');
+        const mensagemElement = document.getElementById('mensagem');
+        const nivelAtualElement = document.getElementById('nivel-atual');
+        const modalPergunta = document.getElementById('modal-pergunta');
+        const textoPergunta = document.getElementById('texto-pergunta');
+        const opcoesResposta = document.getElementById('opcoes-resposta');
 
-    function criarLabirinto() {
-      labirintoElement.innerHTML = '';
-      for (let y = 0; y < labirinto.length; y++) {
-        for (let x = 0; x < labirinto[y].length; x++) {
-          const bloco = document.createElement('div');
-          bloco.classList.add('bloco');
-          if (labirinto[y][x] === 'P') {
-            bloco.classList.add('parede');
-          }
-          if (personagemPos.x === x && personagemPos.y === y) {
-            const personagem = document.createElement('div');
-            personagem.classList.add('personagem');
-            bloco.appendChild(personagem);
-          }
-          if (labirinto[y][x] === ' ') {
-            bloco.classList.add('porta');
-            bloco.addEventListener('click', () => passarPelaPorta(x, y));
-          }
-          labirintoElement.appendChild(bloco);
+        // Configurações do jogo
+        const config = {
+            nivelInicial: 1,
+            tamanhoInicial: 5,
+            incrementoTamanho: 2
+        };
+
+        // Banco de perguntas (adicionar mais conforme necessário)
+        const perguntas = [
+            {
+                pergunta: "Qual a soma dos ângulos internos de um triângulo?",
+                opcoes: ["90°", "180°", "270°", "360°"],
+                resposta: 1
+            },
+            {
+                pergunta: "Quantos lados tem um quadrado?",
+                opcoes: ["3", "4", "5", "6"],
+                resposta: 1
+            },
+            {
+                pergunta: "Qual a fórmula da área de um círculo?",
+                opcoes: ["πr²", "2πr", "πd", "2πr²"],
+                resposta: 0
+            },
+            {
+                pergunta: "Qual a medida de cada ângulo interno de um hexágono regular?",
+                opcoes: ["60°", "90°", "120°", "150°"],
+                resposta: 2
+            },
+          
+        ];
+
+        // Estado do jogo
+        let estado = {
+            nivel: config.nivelInicial,
+            tamanhoMapa: config.tamanhoInicial,
+            personagemPos: { x: 0, y: 0 },
+            saidaPos: { x: 0, y: 0 },
+            jogoAtivo: true,
+            labirinto: [],
+            caminhoValido: [],
+            destinoClicado: null
+        };
+
+        // Inicialização do jogo
+        function iniciarJogo() {
+            estado.nivel = config.nivelInicial;
+            estado.tamanhoMapa = config.tamanhoInicial;
+            estado.jogoAtivo = true;
+            
+            gerarLabirinto();
+            encontrarCaminhoValido();
+            atualizarUI();
         }
-      }
-    }
 
-    function passarPelaPorta(x, y) {
-      if (!jogoAtivo) return;
-      
-      // Verificar se acertou a pergunta
-      if (perguntaAtual < perguntas.length) {
-        const pergunta = perguntas[perguntaAtual];
-        const resposta = prompt(`${pergunta.pergunta}\n${pergunta.respostas.join('\n')}`);
-        if (pergunta.respostas.indexOf(resposta) === pergunta.correta) {
-          personagemPos.x = x;
-          personagemPos.y = y;
-          mensagemElement.innerText = 'Resposta certa! Avance.';
-          perguntaAtual++;
-        } else {
-          mensagemElement.innerText = 'Resposta errada! Tente novamente.';
+        // Gera um labirinto aleatório
+        function gerarLabirinto() {
+            const tamanho = estado.tamanhoMapa;
+            estado.labirinto = [];
+            
+            // Cria uma matriz vazia
+            for (let y = 0; y < tamanho; y++) {
+                estado.labirinto[y] = [];
+                for (let x = 0; x < tamanho; x++) {
+                    // 70% de chance de ser caminho, 30% de ser parede
+                    estado.labirinto[y][x] = Math.random() < 0.7 ? ' ' : 'P';
+                }
+            }
+            
+            // Garante que início e fim são caminhos
+            estado.personagemPos = { x: 0, y: 0 };
+            estado.labirinto[0][0] = ' ';
+            
+            estado.saidaPos = { x: tamanho-1, y: tamanho-1 };
+            estado.labirinto[tamanho-1][tamanho-1] = 'S';
         }
-      }
-      
-      if (perguntaAtual === perguntas.length) {
-        mensagemElement.innerText = 'Você completou o labirinto!';
-        jogoAtivo = false;
-      }
-      
-      criarLabirinto();
-    }
 
-    function moverPersonagem(event) {
-      if (!jogoAtivo) return;
-      
-      let novoX = personagemPos.x;
-      let novoY = personagemPos.y;
-      
-      if (event.key === 'ArrowUp') novoY--;
-      if (event.key === 'ArrowDown') novoY++;
-      if (event.key === 'ArrowLeft') novoX--;
-      if (event.key === 'ArrowRight') novoX++;
-      
-      if (labirinto[novoY] && labirinto[novoY][novoX] !== 'P') {
-        personagemPos.x = novoX;
-        personagemPos.y = novoY;
-        criarLabirinto();
-      }
-    }
+        // Encontra um caminho válido usando BFS
+        function encontrarCaminhoValido() {
+            const tamanho = estado.tamanhoMapa;
+            const visitados = Array(tamanho).fill().map(() => Array(tamanho).fill(false));
+            const fila = [{x: 0, y: 0, path: [{x: 0, y: 0}]}];
+            visitados[0][0] = true;
+            
+            const direcoes = [
+                {dx: 0, dy: -1}, // Cima
+                {dx: 1, dy: 0},  // Direita
+                {dx: 0, dy: 1},  // Baixo
+                {dx: -1, dy: 0}  // Esquerda
+            ];
+            
+            while (fila.length > 0) {
+                const atual = fila.shift();
+                
+                // Verifica se chegou na saída
+                if (atual.x === estado.saidaPos.x && atual.y === estado.saidaPos.y) {
+                    estado.caminhoValido = atual.path;
+                    return;
+                }
+                
+                // Explora vizinhos
+                for (const dir of direcoes) {
+                    const nx = atual.x + dir.dx;
+                    const ny = atual.y + dir.dy;
+                    
+                    if (nx >= 0 && nx < tamanho && ny >= 0 && ny < tamanho && 
+                        (estado.labirinto[ny][nx] === ' ' || estado.labirinto[ny][nx] === 'S') && 
+                        !visitados[ny][nx]) {
+                        visitados[ny][nx] = true;
+                        fila.push({
+                            x: nx,
+                            y: ny,
+                            path: [...atual.path, {x: nx, y: ny}]
+                        });
+                    }
+                }
+            }
+            
+            // Se não encontrou caminho, regenera o labirinto
+            gerarLabirinto();
+            encontrarCaminhoValido();
+        }
 
-    window.addEventListener('keydown', moverPersonagem);
-    criarLabirinto();
-  </script>
+        // Atualiza a interface do usuário
+        function atualizarUI() {
+            labirintoElement.innerHTML = '';
+            labirintoElement.style.gridTemplateColumns = `repeat(${estado.tamanhoMapa}, 1fr)`;
+            labirintoElement.style.gridTemplateRows = `repeat(${estado.tamanhoMapa}, 1fr)`;
+            
+            nivelAtualElement.textContent = estado.nivel;
+            
+            for (let y = 0; y < estado.labirinto.length; y++) {
+                for (let x = 0; x < estado.labirinto[y].length; x++) {
+                    const bloco = document.createElement('div');
+                    bloco.classList.add('bloco');
+                    
+                    // Verifica se está no caminho válido
+                    const noCaminho = estado.caminhoValido.some(pos => pos.x === x && pos.y === y);
+                    
+                    if (estado.labirinto[y][x] === 'P') {
+                        bloco.classList.add('parede');
+                    } else if (estado.labirinto[y][x] === 'S') {
+                        bloco.classList.add('saida');
+                    } else if (noCaminho) {
+                        bloco.classList.add('caminho');
+                    } else {
+                        bloco.classList.add('parede'); // Não é caminho válido
+                    }
+                    
+                    // Adiciona o personagem se for a posição atual
+                    if (estado.personagemPos.x === x && estado.personagemPos.y === y) {
+                        const personagem = document.createElement('div');
+                        personagem.classList.add('personagem');
+                        bloco.appendChild(personagem);
+                    }
+                    
+                    // Adiciona evento de clique para os blocos de caminho
+                    if (noCaminho && !(estado.personagemPos.x === x && estado.personagemPos.y === y)) {
+                        bloco.addEventListener('click', () => clicarNoBloco(x, y));
+                    }
+                    
+                    labirintoElement.appendChild(bloco);
+                }
+            }
+        }
+
+        // Função chamada quando clica em um bloco do caminho
+        function clicarNoBloco(x, y) {
+            // Verifica se o bloco clicado é adjacente ao personagem
+            const dx = Math.abs(estado.personagemPos.x - x);
+            const dy = Math.abs(estado.personagemPos.y - y);
+            
+            if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                estado.destinoClicado = {x, y};
+                mostrarPergunta();
+            } else {
+                mensagemElement.textContent = "Você só pode se mover para quadrados adjacentes!";
+                mensagemElement.className = 'mensagem erro';
+                setTimeout(() => {
+                    mensagemElement.textContent = '';
+                }, 2000);
+            }
+        }
+
+        // Mostra uma pergunta aleatória no modal
+        function mostrarPergunta() {
+            const perguntaAleatoria = perguntas[Math.floor(Math.random() * perguntas.length)];
+            textoPergunta.textContent = perguntaAleatoria.pergunta;
+            opcoesResposta.innerHTML = '';
+            
+            perguntaAleatoria.opcoes.forEach((opcao, index) => {
+                const botao = document.createElement('button');
+                botao.classList.add('opcao');
+                botao.textContent = opcao;
+                botao.addEventListener('click', () => verificarResposta(index === perguntaAleatoria.resposta));
+                opcoesResposta.appendChild(botao);
+            });
+            
+            modalPergunta.style.display = 'flex';
+        }
+
+        // Verifica se a resposta está correta
+        function verificarResposta(correta) {
+            modalPergunta.style.display = 'none';
+            
+            if (correta) {
+                mensagemElement.textContent = "Resposta correta! Avançando...";
+                mensagemElement.className = 'mensagem acerto';
+                
+                // Move o personagem para o destino clicado
+                estado.personagemPos = {...estado.destinoClicado};
+                atualizarUI();
+                
+                // Verifica se chegou na saída
+                if (estado.personagemPos.x === estado.saidaPos.x && estado.personagemPos.y === estado.saidaPos.y) {
+                    mensagemElement.textContent = `Parabéns! Você completou o nível ${estado.nivel}`;
+                    
+                    // Avança para o próximo nível
+                    setTimeout(() => {
+                        estado.nivel++;
+                        estado.tamanhoMapa += config.incrementoTamanho;
+                        iniciarJogo();
+                        mensagemElement.textContent = '';
+                    }, 1500);
+                } else {
+                    setTimeout(() => {
+                        mensagemElement.textContent = '';
+                    }, 1000);
+                }
+            } else {
+                mensagemElement.textContent = "Resposta incorreta! Tente novamente.";
+                mensagemElement.className = 'mensagem erro';
+                setTimeout(() => {
+                    mensagemElement.textContent = '';
+                }, 2000);
+            }
+        }
+
+        // Movimentação do personagem com teclado (opcional)
+        function moverPersonagem(event) {
+            if (!estado.jogoAtivo) return;
+
+            let novoX = estado.personagemPos.x;
+            let novoY = estado.personagemPos.y;
+
+            if (event.key === 'ArrowUp') novoY--;
+            if (event.key === 'ArrowDown') novoY++;
+            if (event.key === 'ArrowLeft') novoX--;
+            if (event.key === 'ArrowRight') novoX++;
+
+            // Verifica se a nova posição é válida (caminho azul ou saída)
+            const noCaminho = estado.caminhoValido.some(pos => pos.x === novoX && pos.y === novoY);
+            const naSaida = (novoX === estado.saidaPos.x && novoY === estado.saidaPos.y);
+            
+            if (novoX >= 0 && novoX < estado.tamanhoMapa && 
+                novoY >= 0 && novoY < estado.tamanhoMapa && 
+                (noCaminho || naSaida || estado.labirinto[novoY][novoX] === 'S')) {
+                estado.personagemPos.x = novoX;
+                estado.personagemPos.y = novoY;
+                atualizarUI();
+                
+                // Verifica se chegou na saída
+                if (naSaida) {
+                    mensagemElement.textContent = `Parabéns! Você completou o nível ${estado.nivel}`;
+                    mensagemElement.className = 'mensagem acerto';
+                    
+                    // Avança para o próximo nível
+                    setTimeout(() => {
+                        estado.nivel++;
+                        estado.tamanhoMapa += config.incrementoTamanho;
+                        iniciarJogo();
+                        mensagemElement.textContent = '';
+                    }, 1500);
+                }
+            }
+        }
+
+        // Event listeners
+        window.addEventListener('keydown', moverPersonagem);
+        
+        // Inicia o jogo
+        iniciarJogo();
+    </script>
 </body>
 </html>
