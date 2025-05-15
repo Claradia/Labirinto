@@ -1,0 +1,70 @@
+:root {    --cor-fundo: #121212;
+    --cor-surface: #1e1e1e;
+    --cor-primaria: #bb86fc; /* Padronizei para lowercase */
+    --cor-secundaria: #03dac6; /* Padronizei para lowercase */
+    --cor-texto: #e1e1e1;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    margin: 0; /* Adicionei para reset */
+}
+
+.labirinto {
+    background-color: var(--cor-surface);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    margin: 20px auto; /* Adicionei margem para centralizar */
+    max-width: fit-content; /* Melhor para responsividade */
+}
+
+.bloco.caminho {
+    background-color: rgba(30, 30, 46, 0.5);
+    border: 1px solid var(--cor-primaria);
+    transition: all 0.3s ease; /* Adicionei transição suave */
+}
+
+.bloco.parede {
+    background-color: rgba(105, 104, 104, 0.8);
+    border: 1px solid #444;
+    cursor: not-allowed; /* Feedback visual melhorado */
+}
+
+.personagem {
+    background-color: var(--cor-secundaria);
+    box-shadow: 0 0 0 2px var(--cor-surface), 0 0 0 4px var(--cor-secundaria);
+    transition: transform 0.2s ease; /* Adicionei transição */
+}
+
+.saida {
+    background-color: var(--cor-primaria);
+    animation: float 3s infinite ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Melhor contorno */
+}
+
+@keyframes float {
+    0% { 
+        transform: translateY(0); 
+        box-shadow: 0 0 10px rgba(187, 134, 252, 0.5); /* Efeito adicional */
+    }
+    50% { 
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(187, 134, 252, 0.7); 
+    }
+    100% { 
+        transform: translateY(0);
+        box-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
+    }
+}
+
+/* Adicionei estas regras para melhorar acessibilidade */
+.bloco.caminho:hover {
+    filter: brightness(1.2);
+}
+
+.personagem:hover {
+    transform: scale(1.05);
+}
