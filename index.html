@@ -7,11 +7,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --cor-fundo: #121212;
-            --cor-surface: #1e1e1e;
-            --cor-primaria: #bb86fc;
-            --cor-secundaria: #03dac6;
-            --cor-texto: #e1e1e1;
+            --cor-fundo: #8bb7f0;
+            --cor-surface: #60a8eb;
+            --cor-primaria:#886bf1 ;
+            --cor-secundaria: #08e9d6;
+            --cor-texto: #ffffff;
             --tamanho-bloco: 12vw;
             --tamanho-bloco-max: 60px;
             --tamanho-bloco-min: 40px;
@@ -84,8 +84,8 @@
         }
 
         .parede {
-            background-color: rgba(70, 70, 70, 0.8);
-            border: 1px solid #444;
+            background-color: #1b1b1b;
+            border: 1px solid #1b1b1b;
             cursor: not-allowed;
         }
 
@@ -125,7 +125,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(2, 2, 2, 0.8);
             z-index: 100;
             justify-content: center;
             align-items: center;
@@ -138,7 +138,7 @@
             border-radius: 10px;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             position: relative;
         }
 
@@ -167,7 +167,7 @@
 
         .opcao {
             padding: 12px;
-            background-color: rgba(30, 30, 46, 0.7);
+            background-color:#886bf1 ;
             border: 1px solid var(--cor-primaria);
             border-radius: 6px;
             cursor: pointer;
@@ -177,7 +177,7 @@
         }
 
         .opcao:hover, .opcao:focus {
-            background-color: rgba(30, 30, 70, 0.9);
+            background-color: rgba(128, 58, 240, 0.9);
         }
 
         .tela-inicio, .tela-fim {
@@ -207,7 +207,7 @@
         .botao-iniciar {
             padding: 12px 24px;
             background-color: var(--cor-primaria);
-            color: #000;
+            color: #ffffff;
             border: none;
             border-radius: 6px;
             font-size: 1rem;
@@ -239,7 +239,7 @@
         }
 
         .controle {
-            background-color: rgba(30, 30, 46, 0.7);
+            background-color: rgba(0, 0, 0, 0.7);
             border: 1px solid var(--cor-primaria);
             border-radius: 8px;
             width: 60px;
@@ -254,7 +254,7 @@
 
         .controle:active {
             background-color: var(--cor-primaria);
-            color: #000;
+            color: #000000;
         }
 
         .controle-cima { grid-area: cima; }
@@ -397,6 +397,21 @@
                     pergunta: "Quantos vértices tem uma pirâmide de base quadrada?",
                     opcoes: ["4", "5", "6", "8"],
                     resposta: 1
+                },
+                {
+                    pergunta: "Qual é a forma da base de um cone?",
+                    opcoes: ["Quadrado", "Triângulo", "Círculo", "Retângulo"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Quantos lados tem um triângulo?",
+                    opcoes: ["2", "3", "4", "5"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual forma tem todos os lados iguais em um quadrado?",
+                    opcoes: ["Triângulo", "Retângulo", "Losango", "Trapézio"],
+                    resposta: 2
                 }
             ],
             medias: [
@@ -409,6 +424,16 @@
                     pergunta: "Quantas diagonais tem um paralelepípedo?",
                     opcoes: ["4", "6", "8", "12"],
                     resposta: 0
+                },
+                {
+                    pergunta: "Quantas faces tem um prisma triangular?",
+                    opcoes: ["3", "4", "5", "6"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem exatamente 5 vértices?",
+                    opcoes: ["Cubo", "Pirâmide quadrada", "Prisma triangular", "Pirâmide triangular"],
+                    resposta: 1
                 }
             ],
             dificeis: [
@@ -420,6 +445,11 @@
                 {
                     pergunta: "Quantas arestas tem um dodecaedro regular?",
                     opcoes: ["12", "20", "30", "60"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual é a soma dos ângulos internos de um heptágono?",
+                    opcoes: ["540°", "720°", "900°", "1080°"],
                     resposta: 2
                 }
             ]
@@ -439,7 +469,8 @@
             acertos: 0,
             erros: 0,
             perguntaAtual: null,
-            isPerguntaDificil: false
+            isPerguntaDificil: false,
+            perguntasUsadas: new Set() // Novo: armazenar perguntas já usadas
         };
 
         // Funções do jogo
@@ -664,25 +695,45 @@
             }
         }
 
+        function obterPerguntaAleatoria(categoria) {
+            // Filtrar perguntas não usadas
+            const perguntasDisponiveis = perguntas[categoria].filter(p => 
+                !estado.perguntasUsadas.has(p.pergunta));
+            
+            // Se todas as perguntas foram usadas, limpar o conjunto e começar de novo
+            if (perguntasDisponiveis.length === 0) {
+                estado.perguntasUsadas.clear();
+                return perguntas[categoria][Math.floor(Math.random() * perguntas[categoria].length)];
+            }
+            
+            // Escolher uma pergunta aleatória entre as disponíveis
+            const perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
+            
+            // Marcar a pergunta como usada
+            estado.perguntasUsadas.add(perguntaAleatoria.pergunta);
+            
+            return perguntaAleatoria;
+        }
+
         function mostrarPergunta() {
             let perguntaAleatoria;
             const nivel = estado.nivel;
             
             if (estado.isPerguntaDificil) {
-                const perguntasDisponiveis = perguntas.dificeis;
-                perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
+                perguntaAleatoria = obterPerguntaAleatoria('dificeis');
                 mostrarMensagem("Pergunta difícil!", 'erro');
             } else if (nivel <= 2) {
-                const perguntasDisponiveis = perguntas.faceis;
-                perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
+                perguntaAleatoria = obterPerguntaAleatoria('faceis');
             } else if (nivel <= 4) {
                 const rand = Math.random();
-                const perguntasDisponiveis = rand < 0.7 ? perguntas.faceis : perguntas.medias;
-                perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
+                perguntaAleatoria = rand < 0.7 ? 
+                    obterPerguntaAleatoria('faceis') : 
+                    obterPerguntaAleatoria('medias');
             } else {
                 const rand = Math.random();
-                const perguntasDisponiveis = rand < 0.5 ? perguntas.medias : perguntas.dificeis;
-                perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
+                perguntaAleatoria = rand < 0.5 ? 
+                    obterPerguntaAleatoria('medias') : 
+                    obterPerguntaAleatoria('dificeis');
             }
             
             estado.perguntaAtual = perguntaAleatoria;
@@ -798,6 +849,7 @@
             estado.tamanhoMapa = config.tamanhoInicial;
             estado.acertos = 0;
             estado.erros = 0;
+            estado.perguntasUsadas.clear(); // Limpar perguntas usadas ao iniciar novo jogo
             
             gerarLabirintoValido();
             atualizarUI();
