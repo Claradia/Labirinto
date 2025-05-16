@@ -89,6 +89,16 @@
             cursor: not-allowed;
         }
 
+        .obstaculo {
+            background-color: rgba(30, 30, 46, 0.5);
+            border: 1px solid var(--cor-primaria);
+        }
+
+        .obstaculo-dificil {
+            background-color: rgba(30, 30, 70, 0.7);
+            border: 2px solid var(--cor-primaria);
+        }
+
         .personagem {
             background-color: var(--cor-secundaria);
             width: 70%;
@@ -228,47 +238,55 @@
             100% { transform: scale(1); opacity: 0.8; }
         }
 
-        .controles-mobile {
-            display: none;
-            grid-template-areas:
-                ". cima ."
-                "esquerda baixo direita";
-            gap: 10px;
+        .ranking {
             margin-top: 20px;
-            justify-content: center;
-        }
-
-        .controle {
-            background-color: rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
             border: 1px solid var(--cor-primaria);
             border-radius: 8px;
-            width: 60px;
-            height: 60px;
+            padding: 10px;
+        }
+
+        .ranking-item {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            user-select: none;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .controle:active {
-            background-color: var(--cor-primaria);
-            color: #000000;
+        .ranking-item:last-child {
+            border-bottom: none;
         }
 
-        .controle-cima { grid-area: cima; }
-        .controle-baixo { grid-area: baixo; }
-        .controle-esquerda { grid-area: esquerda; }
-        .controle-direita { grid-area: direita; }
+        .ranking-posicao {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .ranking-nome {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        .ranking-pontos {
+            font-weight: bold;
+        }
+
+        .input-nome {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--cor-primaria);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
 
         @media (max-width: 768px) {
             :root {
                 --tamanho-bloco: 15vw;
-            }
-
-            .controles-mobile {
-                display: grid;
             }
 
             .labirinto {
@@ -311,13 +329,6 @@
 
     <div id="mensagem" class="mensagem"></div>
 
-    <div class="controles-mobile">
-        <div class="controle controle-cima" id="controle-cima">↑</div>
-        <div class="controle controle-baixo" id="controle-baixo">↓</div>
-        <div class="controle controle-esquerda" id="controle-esquerda">←</div>
-        <div class="controle controle-direita" id="controle-direita">→</div>
-    </div>
-
     <div id="modal-pergunta" class="modal">
         <div class="modal-content">
             <button class="fechar-modal">&times;</button>
@@ -329,8 +340,9 @@
     <div id="tela-inicio" class="tela-inicio">
         <div class="tela-conteudo">
             <h2>Labirinto Geométrico</h2>
-            <p>Responda perguntas de geometria para navegar pelo labirinto!</p>
-            <p>Use os controles ou clique nos blocos adjacentes para se mover.</p>
+            <p>Complete o labirinto!</p>
+            <p>Use as teclas ou clique nos blocos adjacentes para se mover.</p>
+            <p>A partir do nível 2, aparecerão obstáculos que exigem perguntas para serem atravessados.</p>
             <button id="botao-iniciar" class="botao-iniciar">Iniciar Jogo</button>
         </div>
     </div>
@@ -339,7 +351,13 @@
         <div class="tela-conteudo">
             <h2>Parabéns!</h2>
             <p id="mensagem-final"></p>
-            <button id="botao-reiniciar" class="botao-iniciar">Jogar Novamente</button>
+            <input type="text" id="input-nome" class="input-nome" placeholder="Digite seu nome" maxlength="20">
+            <button id="botao-salvar" class="botao-iniciar" style="margin-top: 10px;">Salvar Pontuação</button>
+            <div class="ranking" id="ranking">
+                <h3>Ranking</h3>
+                <div id="ranking-lista"></div>
+            </div>
+            <button id="botao-reiniciar" class="botao-iniciar" style="margin-top: 10px;">Jogar Novamente</button>
         </div>
     </div>
 
@@ -358,14 +376,11 @@
             telaFim: document.getElementById('tela-fim'),
             botaoIniciar: document.getElementById('botao-iniciar'),
             botaoReiniciar: document.getElementById('botao-reiniciar'),
+            botaoSalvar: document.getElementById('botao-salvar'),
             mensagemFinal: document.getElementById('mensagem-final'),
             fecharModal: document.querySelector('.fechar-modal'),
-            controles: {
-                cima: document.getElementById('controle-cima'),
-                baixo: document.getElementById('controle-baixo'),
-                esquerda: document.getElementById('controle-esquerda'),
-                direita: document.getElementById('controle-direita')
-            }
+            rankingLista: document.getElementById('ranking-lista'),
+            inputNome: document.getElementById('input-nome')
         };
 
         // Configurações do jogo
@@ -376,6 +391,7 @@
             maxNiveis: 5,
             maxTentativasCaminho: 10,
             probabilidadeParede: 0.4,
+            chanceObstaculo: 0.2,
             chancePerguntaDificil: 0.3,
             isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
         };
@@ -385,45 +401,68 @@
             faceis: [
                 {
                     pergunta: "Quantas faces tem um cubo?",
-                    opcoes: ["4", "6", "8", "12"],
+                    opcoes: ["4", "6", "8", "10"],
                     resposta: 1
                 },
                 {
-                    pergunta: "Qual forma geométrica lembra uma lata de refrigerante?",
-                    opcoes: ["Esfera", "Cubo", "Cilindro", "Pirâmide"],
+                    pergunta: "Qual forma tem todas as faces triangulares?",
+                    opcoes: ["Cubo", "Pirâmide", "Esfera", "Cilindro"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual objeto tem formato de esfera?",
+                    opcoes: ["Dado", "Bola", "Caixa", "Lata"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantos vértices tem um cubo?",
+                    opcoes: ["4", "6", "8", "12"],
                     resposta: 2
                 },
                 {
-                    pergunta: "Quantos vértices tem uma pirâmide de base quadrada?",
+                    pergunta: "Qual forma lembra uma lata de refrigerante?",
+                    opcoes: ["Cubo", "Esfera", "Cilindro", "Pirâmide"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Quantas arestas tem um cubo?",
+                    opcoes: ["6", "8", "12", "14"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem uma base circular e um vértice?",
+                    opcoes: ["Cilindro", "Cone", "Esfera", "Pirâmide"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantas faces tem uma pirâmide de base quadrada?",
                     opcoes: ["4", "5", "6", "8"],
                     resposta: 1
                 },
                 {
-                    pergunta: "Qual é a forma da base de um cone?",
-                    opcoes: ["Quadrado", "Triângulo", "Círculo", "Retângulo"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Quantos lados tem um triângulo?",
-                    opcoes: ["2", "3", "4", "5"],
+                    pergunta: "Qual objeto tem formato de cilindro?",
+                    opcoes: ["Bola", "Lata", "Dado", "Chapéu"],
                     resposta: 1
                 },
                 {
-                    pergunta: "Qual forma tem todos os lados iguais em um quadrado?",
-                    opcoes: ["Triângulo", "Retângulo", "Losango", "Trapézio"],
-                    resposta: 2
-                }
-            ],
-            medias: [
-                {
-                    pergunta: "Qual poliedro é formado apenas por faces triangulares?",
-                    opcoes: ["Cubo", "Octaedro", "Cilindro", "Dodecaedro"],
+                    pergunta: "Qual forma tem todas as faces quadradas?",
+                    opcoes: ["Pirâmide", "Cubo", "Esfera", "Cone"],
                     resposta: 1
                 },
                 {
-                    pergunta: "Quantas diagonais tem um paralelepípedo?",
-                    opcoes: ["4", "6", "8", "12"],
-                    resposta: 0
+                    pergunta: "Qual forma lembra uma bola de futebol?",
+                    opcoes: ["Cubo", "Esfera", "Cilindro", "Pirâmide"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantas faces tem um paralelepípedo?",
+                    opcoes: ["4", "6", "8", "10"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual forma lembra um chapéu de bruxa?",
+                    opcoes: ["Cilindro", "Cone", "Esfera", "Cubo"],
+                    resposta: 1
                 },
                 {
                     pergunta: "Quantas faces tem um prisma triangular?",
@@ -432,27 +471,128 @@
                 },
                 {
                     pergunta: "Qual forma tem exatamente 5 vértices?",
-                    opcoes: ["Cubo", "Pirâmide quadrada", "Prisma triangular", "Pirâmide triangular"],
+                    opcoes: ["Cubo", "Pirâmide", "Esfera", "Cilindro"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantas arestas tem uma pirâmide triangular?",
+                    opcoes: ["4", "6", "8", "10"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual forma lembra uma caixa de sapato?",
+                    opcoes: ["Esfera", "Cubo", "Cilindro", "Cone"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantas faces tem um tetraedro?",
+                    opcoes: ["3", "4", "5", "6"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual forma lembra um dado?",
+                    opcoes: ["Esfera", "Cubo", "Cilindro", "Pirâmide"],
+                    resposta: 1
+                },
+                // Novas perguntas fáceis adicionadas
+                {
+                    pergunta: "Qual forma tem apenas 3 lados?",
+                    opcoes: ["Quadrado", "Triângulo", "Retângulo", "Círculo"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantos lados tem um quadrado?",
+                    opcoes: ["3", "4", "5", "6"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual forma não tem cantos?",
+                    opcoes: ["Triângulo", "Quadrado", "Círculo", "Retângulo"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem 4 lados iguais?",
+                    opcoes: ["Triângulo", "Retângulo", "Quadrado", "Círculo"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Quantos lados tem um retângulo?",
+                    opcoes: ["3", "4", "5", "6"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual forma tem um lado curvo?",
+                    opcoes: ["Quadrado", "Triângulo", "Círculo", "Retângulo"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem 3 pontas?",
+                    opcoes: ["Quadrado", "Estrela", "Triângulo", "Círculo"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual objeto tem formato de cubo?",
+                    opcoes: ["Bola", "Dado", "Lata", "Chapéu"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantos lados tem um hexágono?",
+                    opcoes: ["4", "5", "6", "7"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem todos os lados iguais?",
+                    opcoes: ["Retângulo", "Quadrado", "Triângulo", "Trapézio"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantos cantos tem um triângulo?",
+                    opcoes: ["1", "2", "3", "4"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem dois lados longos e dois curtos?",
+                    opcoes: ["Quadrado", "Triângulo", "Retângulo", "Círculo"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Quantos lados tem um pentágono?",
+                    opcoes: ["3", "4", "5", "6"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem um lado reto e um lado curvo?",
+                    opcoes: ["Semicírculo", "Quadrado", "Triângulo", "Retângulo"],
+                    resposta: 0
+                },
+                {
+                    pergunta: "Quantos cantos tem um retângulo?",
+                    opcoes: ["2", "3", "4", "5"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem a forma de uma pizza?",
+                    opcoes: ["Quadrado", "Triângulo", "Círculo", "Retângulo"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Quantos lados tem um octógono?",
+                    opcoes: ["6", "7", "8", "9"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem a forma de uma porta?",
+                    opcoes: ["Quadrado", "Triângulo", "Retângulo", "Círculo"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Quantos cantos tem um quadrado?",
+                    opcoes: ["3", "4", "5", "6"],
                     resposta: 1
                 }
             ],
-            dificeis: [
-                {
-                    pergunta: "Qual poliedro regular tem 20 faces triangulares?",
-                    opcoes: ["Dodecaedro", "Icosaedro", "Tetraedro", "Octaedro"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantas arestas tem um dodecaedro regular?",
-                    opcoes: ["12", "20", "30", "60"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual é a soma dos ângulos internos de um heptágono?",
-                    opcoes: ["540°", "720°", "900°", "1080°"],
-                    resposta: 2
-                }
-            ]
+            medias: [],
+            dificeis: []
         };
 
         // Estado do jogo
@@ -470,7 +610,8 @@
             erros: 0,
             perguntaAtual: null,
             isPerguntaDificil: false,
-            perguntasUsadas: new Set() // Novo: armazenar perguntas já usadas
+            perguntasUsadas: new Set(),
+            ranking: JSON.parse(localStorage.getItem('labirinto-ranking')) || []
         };
 
         // Funções do jogo
@@ -481,7 +622,11 @@
             for (let y = 0; y < tamanho; y++) {
                 estado.labirinto[y] = [];
                 for (let x = 0; x < tamanho; x++) {
-                    estado.labirinto[y][x] = Math.random() > config.probabilidadeParede ? ' ' : 'P';
+                    if (estado.nivel >= 2 && Math.random() < config.chanceObstaculo) {
+                        estado.labirinto[y][x] = 'O'; // Obstáculo
+                    } else {
+                        estado.labirinto[y][x] = Math.random() > config.probabilidadeParede ? ' ' : 'P';
+                    }
                 }
             }
             
@@ -516,7 +661,7 @@
                     const ny = atual.y + dir.dy;
                     
                     if (nx >= 0 && nx < tamanho && ny >= 0 && ny < tamanho && 
-                        (estado.labirinto[ny][nx] === ' ' || estado.labirinto[ny][nx] === 'S') && 
+                        (estado.labirinto[ny][nx] === ' ' || estado.labirinto[ny][nx] === 'S' || estado.labirinto[ny][nx] === 'O') && 
                         !visitados[ny][nx]) {
                         visitados[ny][nx] = true;
                         fila.push({
@@ -556,6 +701,8 @@
                     if (x === y || x === y+1 || x === y-1 || 
                         (x > 0 && x < tamanho-1 && y > 0 && y < tamanho-1 && Math.random() > 0.3)) {
                         estado.labirinto[y][x] = ' ';
+                    } else if (estado.nivel >= 2 && Math.random() < config.chanceObstaculo) {
+                        estado.labirinto[y][x] = 'O'; // Obstáculo
                     } else {
                         estado.labirinto[y][x] = 'P';
                     }
@@ -580,7 +727,7 @@
             
             for (let y = 0; y < tamanho; y++) {
                 for (let x = 0; x < tamanho; x++) {
-                    if (estado.labirinto[y][x] === ' ' && !visitados[y][x]) {
+                    if ((estado.labirinto[y][x] === ' ' || estado.labirinto[y][x] === 'O') && !visitados[y][x]) {
                         const caminho = [];
                         preencherCaminho(x, y, visitados, caminho);
                         if (caminho.length > 0) {
@@ -626,11 +773,17 @@
                         bloco.classList.add('parede');
                     } else if (estado.labirinto[y][x] === 'S') {
                         bloco.classList.add('saida');
+                    } else if (estado.labirinto[y][x] === 'O') {
+                        // Obstáculos podem ser normais ou difíceis
+                        const isDificil = Math.random() < config.chancePerguntaDificil;
+                        if (isDificil) {
+                            bloco.classList.add('obstaculo-dificil');
+                            bloco.setAttribute('data-dificil', 'true');
+                        } else {
+                            bloco.classList.add('obstaculo');
+                        }
                     } else if (noCaminhoPrincipal || noCaminhoAlternativo) {
-                        const isDificil = noCaminhoAlternativo && 
-                                         Math.random() < config.chancePerguntaDificil &&
-                                         !(x === estado.saidaPos.x && y === estado.saidaPos.y);
-                        
+                        const isDificil = noCaminhoAlternativo && Math.random() < config.chancePerguntaDificil;
                         if (isDificil) {
                             bloco.classList.add('caminho-dificil');
                             bloco.setAttribute('data-dificil', 'true');
@@ -647,7 +800,7 @@
                         bloco.appendChild(personagem);
                     }
                     
-                    if ((noCaminhoPrincipal || noCaminhoAlternativo) && 
+                    if ((noCaminhoPrincipal || noCaminhoAlternativo || estado.labirinto[y][x] === 'O') && 
                         !(x === estado.personagemPos.x && y === estado.personagemPos.y)) {
                         bloco.addEventListener('click', () => clicarNoBloco(x, y));
                     }
@@ -687,29 +840,30 @@
                 estado.destinoClicado = {x, y};
                 
                 const bloco = document.querySelector(`.bloco[style="grid-column-start: ${x+1}; grid-row-start: ${y+1};"]`);
-                estado.isPerguntaDificil = bloco && bloco.hasAttribute('data-dificil');
                 
-                mostrarPergunta();
+                // Mostrar pergunta apenas para saída ou obstáculos (a partir do nível 2)
+                if (estado.labirinto[y][x] === 'S' || (estado.nivel >= 2 && estado.labirinto[y][x] === 'O')) {
+                    estado.isPerguntaDificil = bloco && bloco.hasAttribute('data-dificil');
+                    mostrarPergunta();
+                } else {
+                    // Movimento sem pergunta para caminhos normais
+                    moverPersonagemParaDestino();
+                }
             } else {
                 mostrarMensagem("Mova apenas para blocos adjacentes!", 'erro');
             }
         }
 
         function obterPerguntaAleatoria(categoria) {
-            // Filtrar perguntas não usadas
             const perguntasDisponiveis = perguntas[categoria].filter(p => 
                 !estado.perguntasUsadas.has(p.pergunta));
             
-            // Se todas as perguntas foram usadas, limpar o conjunto e começar de novo
             if (perguntasDisponiveis.length === 0) {
                 estado.perguntasUsadas.clear();
                 return perguntas[categoria][Math.floor(Math.random() * perguntas[categoria].length)];
             }
             
-            // Escolher uma pergunta aleatória entre as disponíveis
             const perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
-            
-            // Marcar a pergunta como usada
             estado.perguntasUsadas.add(perguntaAleatoria.pergunta);
             
             return perguntaAleatoria;
@@ -719,22 +873,8 @@
             let perguntaAleatoria;
             const nivel = estado.nivel;
             
-            if (estado.isPerguntaDificil) {
-                perguntaAleatoria = obterPerguntaAleatoria('dificeis');
-                mostrarMensagem("Pergunta difícil!", 'erro');
-            } else if (nivel <= 2) {
-                perguntaAleatoria = obterPerguntaAleatoria('faceis');
-            } else if (nivel <= 4) {
-                const rand = Math.random();
-                perguntaAleatoria = rand < 0.7 ? 
-                    obterPerguntaAleatoria('faceis') : 
-                    obterPerguntaAleatoria('medias');
-            } else {
-                const rand = Math.random();
-                perguntaAleatoria = rand < 0.5 ? 
-                    obterPerguntaAleatoria('medias') : 
-                    obterPerguntaAleatoria('dificeis');
-            }
+            // Para todas as fases, usaremos apenas perguntas fáceis
+            perguntaAleatoria = obterPerguntaAleatoria('faceis');
             
             estado.perguntaAtual = perguntaAleatoria;
             
@@ -767,6 +907,12 @@
             if (correta) {
                 estado.acertos++;
                 mostrarMensagem("Correto! Avançando...", 'acerto');
+                
+                // Se era um obstáculo, transforma em caminho normal após acertar
+                if (estado.labirinto[estado.destinoClicado.y][estado.destinoClicado.x] === 'O') {
+                    estado.labirinto[estado.destinoClicado.y][estado.destinoClicado.x] = ' ';
+                }
+                
                 moverPersonagemParaDestino();
             } else {
                 estado.erros++;
@@ -797,12 +943,74 @@
             }
         }
 
+        function atualizarRanking() {
+            if (!elementos.rankingLista) return;
+            
+            // Ordenar ranking por pontuação (acertos - erros)
+            estado.ranking.sort((a, b) => (b.pontos - a.pontos));
+            
+            elementos.rankingLista.innerHTML = '';
+            
+            estado.ranking.slice(0, 10).forEach((jogador, index) => {
+                const item = document.createElement('div');
+                item.className = 'ranking-item';
+                
+                const posicao = document.createElement('span');
+                posicao.className = 'ranking-posicao';
+                posicao.textContent = `${index + 1}º`;
+                
+                const nome = document.createElement('span');
+                nome.className = 'ranking-nome';
+                nome.textContent = jogador.nome;
+                
+                const pontos = document.createElement('span');
+                pontos.className = 'ranking-pontos';
+                pontos.textContent = jogador.pontos;
+                
+                item.appendChild(posicao);
+                item.appendChild(nome);
+                item.appendChild(pontos);
+                
+                elementos.rankingLista.appendChild(item);
+            });
+        }
+
+        function salvarPontuacao() {
+            const nome = elementos.inputNome.value.trim();
+            if (!nome) {
+                mostrarMensagem("Digite seu nome para salvar a pontuação!", 'erro');
+                return;
+            }
+            
+            const pontos = estado.acertos - estado.erros;
+            
+            estado.ranking.push({
+                nome: nome,
+                pontos: pontos,
+                data: new Date().toLocaleDateString(),
+                acertos: estado.acertos,
+                erros: estado.erros
+            });
+            
+            localStorage.setItem('labirinto-ranking', JSON.stringify(estado.ranking));
+            atualizarRanking();
+            
+            elementos.botaoSalvar.style.display = 'none';
+            elementos.inputNome.style.display = 'none';
+            mostrarMensagem("Pontuação salva com sucesso!", 'acerto');
+        }
+
         function finalizarJogo(mensagem) {
             if (elementos.mensagemFinal) {
                 elementos.mensagemFinal.textContent = `${mensagem} Acertos: ${estado.acertos} | Erros: ${estado.erros}`;
             }
+            
+            atualizarRanking();
+            
             if (elementos.telaFim) {
                 elementos.telaFim.style.display = 'flex';
+                elementos.botaoSalvar.style.display = 'block';
+                elementos.inputNome.style.display = 'block';
             }
         }
 
@@ -816,41 +1024,50 @@
             const noCaminhoAlternativo = estado.caminhosAlternativos.some(caminho => 
                 caminho.some(pos => pos.x === novoX && pos.y === novoY));
             const naSaida = (novoX === estado.saidaPos.x && novoY === estado.saidaPos.y);
+            const noObstaculo = estado.nivel >= 2 && estado.labirinto[novoY][novoX] === 'O';
             
             if (novoX >= 0 && novoX < estado.tamanhoMapa && 
                 novoY >= 0 && novoY < estado.tamanhoMapa && 
-                (noCaminhoPrincipal || noCaminhoAlternativo || naSaida)) {
+                (noCaminhoPrincipal || noCaminhoAlternativo || naSaida || noObstaculo)) {
                 
+                // Se for um obstáculo (a partir do nível 2), mostrar pergunta
+                if (noObstaculo) {
+                    estado.destinoClicado = {x: novoX, y: novoY};
+                    const bloco = document.querySelector(`.bloco[style="grid-column-start: ${novoX+1}; grid-row-start: ${novoY+1};"]`);
+                    estado.isPerguntaDificil = bloco && bloco.hasAttribute('data-dificil');
+                    mostrarPergunta();
+                    return;
+                }
+                
+                // Se for a saída, mostrar pergunta
+                if (naSaida) {
+                    estado.destinoClicado = {x: novoX, y: novoY};
+                    const bloco = document.querySelector(`.bloco[style="grid-column-start: ${novoX+1}; grid-row-start: ${novoY+1};"]`);
+                    estado.isPerguntaDificil = bloco && bloco.hasAttribute('data-dificil');
+                    mostrarPergunta();
+                    return;
+                }
+                
+                // Movimento normal sem pergunta
                 estado.personagemPos.x = novoX;
                 estado.personagemPos.y = novoY;
                 atualizarUI();
-                
-                if (naSaida) {
-                    estado.jogoAtivo = false;
-                    
-                    if (estado.nivel >= config.maxNiveis) {
-                        finalizarJogo(`Parabéns! Você completou todos os ${config.maxNiveis} níveis!`);
-                    } else {
-                        setTimeout(() => {
-                            estado.nivel++;
-                            estado.tamanhoMapa += config.incrementoTamanho;
-                            estado.jogoAtivo = true;
-                            gerarLabirintoValido();
-                            atualizarUI();
-                        }, 1000);
-                    }
-                }
             }
         }
 
-        function iniciarJogo() {
-            estado.jogoAtivo = true;
+        function reiniciarJogo() {
             estado.nivel = config.nivelInicial;
             estado.tamanhoMapa = config.tamanhoInicial;
             estado.acertos = 0;
             estado.erros = 0;
-            estado.perguntasUsadas.clear(); // Limpar perguntas usadas ao iniciar novo jogo
+            estado.perguntasUsadas.clear();
             
+            elementos.telaFim.style.display = 'none';
+            iniciarJogo();
+        }
+
+        function iniciarJogo() {
+            estado.jogoAtivo = true;
             gerarLabirintoValido();
             atualizarUI();
             
@@ -866,7 +1083,11 @@
             }
             
             if (elementos.botaoReiniciar) {
-                elementos.botaoReiniciar.addEventListener('click', iniciarJogo);
+                elementos.botaoReiniciar.addEventListener('click', reiniciarJogo);
+            }
+            
+            if (elementos.botaoSalvar) {
+                elementos.botaoSalvar.addEventListener('click', salvarPontuacao);
             }
             
             if (elementos.fecharModal) {
@@ -875,22 +1096,6 @@
                         elementos.modalPergunta.style.display = 'none';
                     }
                 });
-            }
-            
-            // Controles mobile
-            if (config.isMobile) {
-                if (elementos.controles.cima) {
-                    elementos.controles.cima.addEventListener('click', () => moverPersonagem(0, -1));
-                }
-                if (elementos.controles.baixo) {
-                    elementos.controles.baixo.addEventListener('click', () => moverPersonagem(0, 1));
-                }
-                if (elementos.controles.esquerda) {
-                    elementos.controles.esquerda.addEventListener('click', () => moverPersonagem(-1, 0));
-                }
-                if (elementos.controles.direita) {
-                    elementos.controles.direita.addEventListener('click', () => moverPersonagem(1, 0));
-                }
             }
             
             // Teclado
