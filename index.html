@@ -424,8 +424,7 @@
         // Configurações do jogo
         const config = {
             nivelInicial: 1,
-            tamanhoInicial: 5,
-            incrementoTamanho: 1,
+            tamanhoInicial: 7, // Tamanho fixo do labirinto (7x7)
             maxNiveis: 5,
             maxTentativasCaminho: 10,
             probabilidadeParede: 0.4,
@@ -635,7 +634,7 @@
         // Estado do jogo
         const estado = {
             nivel: config.nivelInicial,
-            tamanhoMapa: config.tamanhoInicial,
+            tamanhoMapa: config.tamanhoInicial, // Tamanho fixo 7x7
             personagemPos: { x: 0, y: 0 },
             saidaPos: { x: 0, y: 0 },
             jogoAtivo: false,
@@ -656,13 +655,25 @@
             const tamanho = estado.tamanhoMapa;
             estado.labirinto = [];
             
+            // Aumentar dificuldade conforme o nível
+            let probParede = config.probabilidadeParede;
+            let probObstaculo = config.chanceObstaculo;
+            
+            if (estado.nivel >= 3) {
+                probParede = 0.5;
+                probObstaculo = 0.3;
+            } else if (estado.nivel >= 5) {
+                probParede = 0.6;
+                probObstaculo = 0.4;
+            }
+            
             for (let y = 0; y < tamanho; y++) {
                 estado.labirinto[y] = [];
                 for (let x = 0; x < tamanho; x++) {
-                    if (estado.nivel >= 2 && Math.random() < config.chanceObstaculo) {
+                    if (estado.nivel >= 2 && Math.random() < probObstaculo) {
                         estado.labirinto[y][x] = 'O'; // Obstáculo
                     } else {
-                        estado.labirinto[y][x] = Math.random() > config.probabilidadeParede ? ' ' : 'P';
+                        estado.labirinto[y][x] = Math.random() > probParede ? ' ' : 'P';
                     }
                 }
             }
@@ -972,7 +983,6 @@
                 } else {
                     setTimeout(() => {
                         estado.nivel++;
-                        estado.tamanhoMapa += config.incrementoTamanho;
                         estado.jogoAtivo = true;
                         gerarLabirintoValido();
                         atualizarUI();
@@ -1095,7 +1105,6 @@
 
         function reiniciarJogo() {
             estado.nivel = config.nivelInicial;
-            estado.tamanhoMapa = config.tamanhoInicial;
             estado.acertos = 0;
             estado.erros = 0;
             estado.perguntasUsadas.clear();
