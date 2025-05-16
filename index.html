@@ -14,7 +14,7 @@
             --cor-texto: #ffffff;
             --tamanho-bloco: 12vw;
             --tamanho-bloco-max: 60px;
-            --tamanho-bloco-min: 40px;
+            --tamanho-bloco-min: 30px; /* Reduzido para telas muito pequenas */
         }
 
         * {
@@ -30,6 +30,13 @@
             padding: 10px;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            margin-bottom: 10px;
         }
 
         h1 {
@@ -37,18 +44,29 @@
             margin: 10px 0;
         }
 
-        .info-nivel, .info-pontuacao {
-            font-size: 1rem;
+        .info-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
             margin: 5px 0;
         }
 
+        .info-nivel, .info-pontuacao {
+            font-size: 1rem;
+            margin: 5px;
+            min-width: 120px;
+        }
+
         .labirinto-container {
+            flex: 1;
             display: flex;
             justify-content: center;
+            align-items: center;
             margin: 10px 0;
             padding: 5px;
             overflow: auto;
             max-width: 100%;
+            width: 100%;
         }
 
         .labirinto {
@@ -59,6 +77,7 @@
             padding: 3px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            max-width: 100%;
         }
 
         .bloco {
@@ -150,6 +169,7 @@
             max-width: 400px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             position: relative;
+            margin: 10px;
         }
 
         .fechar-modal {
@@ -212,6 +232,7 @@
             width: 100%;
             max-width: 400px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            margin: 10px;
         }
 
         .botao-iniciar {
@@ -284,6 +305,7 @@
             font-family: 'Inter', sans-serif;
         }
 
+        /* Ajustes para telas pequenas */
         @media (max-width: 768px) {
             :root {
                 --tamanho-bloco: 15vw;
@@ -297,11 +319,15 @@
         @media (max-width: 480px) {
             :root {
                 --tamanho-bloco: 18vw;
-                --tamanho-bloco-min: 30px;
+                --tamanho-bloco-min: 25px; /* Ajustado para telas muito pequenas */
             }
 
             h1 {
                 font-size: 1.3rem;
+            }
+
+            .info-nivel, .info-pontuacao {
+                font-size: 0.9rem;
             }
 
             .modal-content {
@@ -314,14 +340,60 @@
 
             .opcao {
                 padding: 10px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Ajustes para orientação paisagem em dispositivos móveis */
+        @media (max-height: 500px) and (orientation: landscape) {
+            :root {
+                --tamanho-bloco: 10vh;
+                --tamanho-bloco-min: 25px;
+            }
+
+            .header {
+                margin-bottom: 5px;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+                margin: 5px 0;
+            }
+
+            .info-container {
+                margin: 2px 0;
+            }
+
+            .labirinto-container {
+                margin: 5px 0;
+            }
+        }
+
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 350px) {
+            :root {
+                --tamanho-bloco: 20vw;
+            }
+
+            h1 {
+                font-size: 1.1rem;
+            }
+
+            .info-nivel, .info-pontuacao {
+                min-width: 100px;
+                font-size: 0.8rem;
             }
         }
     </style>
 </head>
 <body>
-    <h1>Labirinto Geométrico</h1>
-    <div class="info-nivel">Nível: <span id="nivel-atual">1</span></div>
-    <div class="info-pontuacao">Acertos: <span id="acertos">0</span> | Erros: <span id="erros">0</span></div>
+    <div class="header">
+        <h1>Labirinto Geométrico</h1>
+        <div class="info-container">
+            <div class="info-nivel">Nível: <span id="nivel-atual">1</span></div>
+            <div class="info-pontuacao">Acertos: <span id="acertos">0</span> | Erros: <span id="erros">0</span></div>
+        </div>
+    </div>
 
     <div class="labirinto-container">
         <div id="labirinto" class="labirinto"></div>
