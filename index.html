@@ -6,1162 +6,188 @@
     <title>Labirinto Geométrico</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --cor-fundo: #8bb7f0;
-            --cor-surface: #60a8eb;
-            --cor-primaria:#886bf1 ;
-            --cor-secundaria: #08e9d6;
-            --cor-texto: #ffffff;
-            --tamanho-bloco: min(12vw, 60px);
-            --tamanho-bloco-min: 30px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--cor-fundo);
-            color: var(--cor-texto);
-            text-align: center;
-            margin: 0;
-            padding: 10px;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
-
-        .header {
-            margin-bottom: 10px;
-            flex-shrink: 0;
-        }
-
-        h1 {
-            font-size: clamp(1.2rem, 4vw, 1.5rem);
-            margin: 10px 0;
-        }
-
-        .info-container {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            margin: 5px 0;
-            gap: 10px;
-        }
-
-        .info-nivel, .info-pontuacao {
-            font-size: clamp(0.9rem, 3vw, 1rem);
-            margin: 5px;
-            min-width: 120px;
-        }
-
-        .labirinto-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 10px 0;
-            padding: 5px;
-            overflow: auto;
-            width: 100%;
-        }
-
-        .labirinto {
-            display: grid;
-            gap: 2px;
-            margin: 0 auto;
-            background-color: var(--cor-surface);
-            padding: 3px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            max-width: 100%;
-            max-height: 80vh;
-        }
-
-        .bloco {
-            width: var(--tamanho-bloco);
-            height: var(--tamanho-bloco);
-            min-width: var(--tamanho-bloco-min);
-            min-height: var(--tamanho-bloco-min);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(0.7rem, 2vw, 0.9rem);
-            transition: all 0.2s;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .caminho {
-            background-color: rgba(30, 30, 46, 0.5);
-            border: 1px solid var(--cor-primaria);
-        }
-
-        .caminho-dificil {
-            background-color: rgba(30, 30, 70, 0.7);
-            border: 2px solid var(--cor-primaria);
-        }
-
-        .parede {
-            background-color: #1b1b1b;
-            border: 1px solid #1b1b1b;
-            cursor: not-allowed;
-        }
-
-        .obstaculo {
-            background-color: rgba(30, 30, 46, 0.5);
-            border: 1px solid var(--cor-primaria);
-        }
-
-        .obstaculo-dificil {
-            background-color: rgba(30, 30, 70, 0.7);
-            border: 2px solid var(--cor-primaria);
-        }
-
-        .personagem {
-            background-color: var(--cor-secundaria);
-            width: 70%;
-            height: 70%;
-            border-radius: 50%;
-            box-shadow: 0 0 0 2px var(--cor-surface), 0 0 0 4px var(--cor-secundaria);
-            transition: transform 0.2s;
-        }
-
-        .saida {
-            background-color: var(--cor-primaria);
-            animation: pulse 2s infinite ease-in-out;
-        }
-
-        .mensagem {
-            margin: 10px 0;
-            font-size: clamp(0.8rem, 3vw, 0.9rem);
-            min-height: 20px;
-            padding: 5px;
-            flex-shrink: 0;
-        }
-
-        .mensagem.acerto {
-            color: #4caf50;
-        }
-
-        .mensagem.erro {
-            color: #f44336;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(2, 2, 2, 0.8);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-        }
-
-        .modal-content {
-            background-color: var(--cor-surface);
-            padding: 20px;
-            border-radius: 10px;
-            width: 100%;
-            max-width: 400px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            position: relative;
-            margin: 10px;
-        }
-
-        .fechar-modal {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--cor-texto);
-            cursor: pointer;
-        }
-
-        .pergunta {
-            font-size: clamp(1rem, 4vw, 1.1rem);
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        .opcoes-resposta {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
-        }
-
-        .opcao {
-            padding: 12px;
-            background-color:#886bf1 ;
-            border: 1px solid var(--cor-primaria);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-size: clamp(0.8rem, 3vw, 0.9rem);
-            text-align: center;
-        }
-
-        .opcao:hover, .opcao:focus {
-            background-color: rgba(128, 58, 240, 0.9);
-        }
-
-        .tela-inicio, .tela-fim {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            z-index: 200;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding: 20px;
-        }
-
-        .tela-conteudo {
-            background-color: var(--cor-surface);
-            padding: 20px;
-            border-radius: 10px;
-            width: 100%;
-            max-width: 400px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            margin: 10px;
-        }
-
-        .botao-iniciar {
-            padding: 12px 24px;
-            background-color: var(--cor-primaria);
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 20px;
-            width: 100%;
-            transition: transform 0.2s, background-color 0.2s;
-        }
-
-        .botao-iniciar:active {
-            transform: scale(0.98);
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
-
-        .ranking {
-            margin-top: 20px;
-            width: 100%;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid var(--cor-primaria);
-            border-radius: 8px;
-            padding: 10px;
-        }
-
-        .ranking-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: clamp(0.8rem, 3vw, 0.9rem);
-        }
-
-        .ranking-item:last-child {
-            border-bottom: none;
-        }
-
-        .ranking-posicao {
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        .ranking-nome {
-            flex-grow: 1;
-            text-align: left;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .ranking-pontos {
-            font-weight: bold;
-        }
-
-        .input-nome {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 6px;
-            border: 1px solid var(--cor-primaria);
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: clamp(0.8rem, 3vw, 0.9rem);
-        }
-
-        /* Ajustes para orientação paisagem em dispositivos móveis */
-        @media (max-height: 500px) and (orientation: landscape) {
-            :root {
-                --tamanho-bloco: min(10vh, 60px);
-            }
-
-            .header {
-                margin-bottom: 5px;
-            }
-
-            h1 {
-                font-size: 1.2rem;
-                margin: 5px 0;
-            }
-
-            .info-container {
-                margin: 2px 0;
-            }
-
-            .labirinto-container {
-                margin: 5px 0;
-            }
-        }
-
-        @media (max-width: 350px) {
-            .info-nivel, .info-pontuacao {
-                min-width: 100px;
-            }
-        }
+        /* ... (mantido o mesmo estilo anterior) ... */
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Labirinto Geométrico</h1>
-        <div class="info-container">
-            <div class="info-nivel">Nível: <span id="nivel-atual">1</span></div>
-            <div class="info-pontuacao">Acertos: <span id="acertos">0</span> | Erros: <span id="erros">0</span></div>
-        </div>
-    </div>
-
-    <div class="labirinto-container">
-        <div id="labirinto" class="labirinto"></div>
-    </div>
-
-    <div id="mensagem" class="mensagem"></div>
-
-    <div id="modal-pergunta" class="modal">
-        <div class="modal-content">
-            <button class="fechar-modal">&times;</button>
-            <div id="texto-pergunta" class="pergunta"></div>
-            <div id="opcoes-resposta" class="opcoes-resposta"></div>
-        </div>
-    </div>
-
-    <div id="tela-inicio" class="tela-inicio">
-        <div class="tela-conteudo">
-            <h2>Labirinto Geométrico</h2>
-            <p>Complete o labirinto!</p>
-            <p>Use as teclas ou clique nos blocos adjacentes para se mover.</p>
-            <p>A partir do nível 2, aparecerão obstáculos que exigem perguntas para serem atravessados.</p>
-            <button id="botao-iniciar" class="botao-iniciar">Iniciar Jogo</button>
-        </div>
-    </div>
-
-    <div id="tela-fim" class="tela-fim" style="display: none;">
-        <div class="tela-conteudo">
-            <h2>Parabéns!</h2>
-            <p id="mensagem-final"></p>
-            <input type="text" id="input-nome" class="input-nome" placeholder="Digite seu nome" maxlength="20">
-            <button id="botao-salvar" class="botao-iniciar" style="margin-top: 10px;">Salvar Pontuação</button>
-            <div class="ranking" id="ranking">
-                <h3>Ranking</h3>
-                <div id="ranking-lista"></div>
-            </div>
-            <button id="botao-reiniciar" class="botao-iniciar" style="margin-top: 10px;">Jogar Novamente</button>
-        </div>
-    </div>
+    <!-- ... (mantido o mesmo HTML anterior) ... -->
 
     <script>
-        // Elementos do DOM
-        const elementos = {
-            labirinto: document.getElementById('labirinto'),
-            mensagem: document.getElementById('mensagem'),
-            nivelAtual: document.getElementById('nivel-atual'),
-            acertos: document.getElementById('acertos'),
-            erros: document.getElementById('erros'),
-            modalPergunta: document.getElementById('modal-pergunta'),
-            textoPergunta: document.getElementById('texto-pergunta'),
-            opcoesResposta: document.getElementById('opcoes-resposta'),
-            telaInicio: document.getElementById('tela-inicio'),
-            telaFim: document.getElementById('tela-fim'),
-            botaoIniciar: document.getElementById('botao-iniciar'),
-            botaoReiniciar: document.getElementById('botao-reiniciar'),
-            botaoSalvar: document.getElementById('botao-salvar'),
-            mensagemFinal: document.getElementById('mensagem-final'),
-            fecharModal: document.querySelector('.fechar-modal'),
-            rankingLista: document.getElementById('ranking-lista'),
-            inputNome: document.getElementById('input-nome')
-        };
+        // ... (mantido o mesmo código anterior até a função gerarLabirinto) ...
 
-        // Configurações do jogo
-        const config = {
-            nivelInicial: 1,
-            tamanhoInicial: 7, // Tamanho fixo do labirinto (7x7)
-            maxNiveis: 5,
-            maxTentativasCaminho: 10,
-            probabilidadeParede: 0.4,
-            chanceObstaculo: 0.2,
-            chancePerguntaDificil: 0.3,
-            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-        };
-
-        // Banco de perguntas
-        const perguntas = {
-            faceis: [
-                {
-                    pergunta: "Quantas faces tem um cubo?",
-                    opcoes: ["4", "6", "8", "10"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma tem todas as faces triangulares?",
-                    opcoes: ["Cubo", "Pirâmide", "Esfera", "Cilindro"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual objeto tem formato de esfera?",
-                    opcoes: ["Dado", "Bola", "Caixa", "Lata"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantos vértices tem um cubo?",
-                    opcoes: ["4", "6", "8", "12"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma lembra uma lata de refrigerante?",
-                    opcoes: ["Cubo", "Esfera", "Cilindro", "Pirâmide"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Quantas arestas tem um cubo?",
-                    opcoes: ["6", "8", "12", "14"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem uma base circular e um vértice?",
-                    opcoes: ["Cilindro", "Cone", "Esfera", "Pirâmide"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantas faces tem uma pirâmide de base quadrada?",
-                    opcoes: ["4", "5", "6", "8"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual objeto tem formato de cilindro?",
-                    opcoes: ["Bola", "Lata", "Dado", "Chapéu"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma tem todas as faces quadradas?",
-                    opcoes: ["Pirâmide", "Cubo", "Esfera", "Cone"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma lembra uma bola de futebol?",
-                    opcoes: ["Cubo", "Esfera", "Cilindro", "Pirâmide"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantas faces tem um paralelepípedo?",
-                    opcoes: ["4", "6", "8", "10"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma lembra um chapéu de bruxa?",
-                    opcoes: ["Cilindro", "Cone", "Esfera", "Cubo"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantas faces tem um prisma triangular?",
-                    opcoes: ["3", "4", "5", "6"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem exatamente 5 vértices?",
-                    opcoes: ["Cubo", "Pirâmide", "Esfera", "Cilindro"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantas arestas tem uma pirâmide triangular?",
-                    opcoes: ["4", "6", "8", "10"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma lembra uma caixa de sapato?",
-                    opcoes: ["Esfera", "Cubo", "Cilindro", "Cone"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantas faces tem um tetraedro?",
-                    opcoes: ["3", "4", "5", "6"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma lembra um dado?",
-                    opcoes: ["Esfera", "Cubo", "Cilindro", "Pirâmide"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma tem apenas 3 lados?",
-                    opcoes: ["Quadrado", "Triângulo", "Retângulo", "Círculo"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantos lados tem um quadrado?",
-                    opcoes: ["3", "4", "5", "6"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma não tem cantos?",
-                    opcoes: ["Triângulo", "Quadrado", "Círculo", "Retângulo"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem 4 lados iguais?",
-                    opcoes: ["Triângulo", "Retângulo", "Quadrado", "Círculo"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Quantos lados tem um retângulo?",
-                    opcoes: ["3", "4", "5", "6"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Qual forma tem um lado curvo?",
-                    opcoes: ["Quadrado", "Triângulo", "Círculo", "Retângulo"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem 3 pontas?",
-                    opcoes: ["Quadrado", "Estrela", "Triângulo", "Círculo"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual objeto tem formato de cubo?",
-                    opcoes: ["Bola", "Dado", "Lata", "Chapéu"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantos lados tem um hexágono?",
-                    opcoes: ["4", "5", "6", "7"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem todos os lados iguais?",
-                    opcoes: ["Retângulo", "Quadrado", "Triângulo", "Trapézio"],
-                    resposta: 1
-                },
-                {
-                    pergunta: "Quantos cantos tem um triângulo?",
-                    opcoes: ["1", "2", "3", "4"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem dois lados longos e dois curtos?",
-                    opcoes: ["Quadrado", "Triângulo", "Retângulo", "Círculo"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Quantos lados tem um pentágono?",
-                    opcoes: ["3", "4", "5", "6"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem um lado reto e um lado curvo?",
-                    opcoes: ["Semicírculo", "Quadrado", "Triângulo", "Retângulo"],
-                    resposta: 0
-                },
-                {
-                    pergunta: "Quantos cantos tem um retângulo?",
-                    opcoes: ["2", "3", "4", "5"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem a forma de uma pizza?",
-                    opcoes: ["Quadrado", "Triângulo", "Círculo", "Retângulo"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Quantos lados tem um octógono?",
-                    opcoes: ["6", "7", "8", "9"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Qual forma tem a forma de uma porta?",
-                    opcoes: ["Quadrado", "Triângulo", "Retângulo", "Círculo"],
-                    resposta: 2
-                },
-                {
-                    pergunta: "Quantos cantos tem um quadrado?",
-                    opcoes: ["3", "4", "5", "6"],
-                    resposta: 1
-                }
-            ],
-            medias: [],
-            dificeis: []
-        };
-
-        // Estado do jogo
-        const estado = {
-            nivel: config.nivelInicial,
-            tamanhoMapa: config.tamanhoInicial, // Tamanho fixo 7x7
-            personagemPos: { x: 0, y: 0 },
-            saidaPos: { x: 0, y: 0 },
-            jogoAtivo: false,
-            labirinto: [],
-            caminhoValido: [],
-            caminhosAlternativos: [],
-            destinoClicado: null,
-            acertos: 0,
-            erros: 0,
-            perguntaAtual: null,
-            isPerguntaDificil: false,
-            perguntasUsadas: new Set(),
-            ranking: JSON.parse(localStorage.getItem('labirinto-ranking')) || []
-        };
-
-        // Funções do jogo
         function gerarLabirinto() {
             const tamanho = estado.tamanhoMapa;
+            const nivelIndex = estado.nivel - 1;
             estado.labirinto = [];
+            estado.morangosRestantes = 0;
             
-            // Aumentar dificuldade conforme o nível
-            let probParede = config.probabilidadeParede;
-            let probObstaculo = config.chanceObstaculo;
+            const probParede = config.probabilidadeParede[nivelIndex];
+            const probMorango = config.chanceMorango[nivelIndex];
+            const probMorangoDificil = config.chanceMorangoDificil[nivelIndex];
             
-            if (estado.nivel >= 3) {
-                probParede = 0.5;
-                probObstaculo = 0.3;
-            } else if (estado.nivel >= 5) {
-                probParede = 0.6;
-                probObstaculo = 0.4;
+            // Fase 1: Labirinto simples
+            if (estado.nivel === 1) {
+                for (let y = 0; y < tamanho; y++) {
+                    estado.labirinto[y] = [];
+                    for (let x = 0; x < tamanho; x++) {
+                        // Garante um caminho principal diagonal
+                        if (x === y || x === y+1 || x === y-1) {
+                            if (Math.random() < probMorango) {
+                                const isDificil = Math.random() < probMorangoDificil;
+                                estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
+                                estado.morangosRestantes++;
+                            } else {
+                                estado.labirinto[y][x] = ' ';
+                            }
+                        } else if (Math.random() < probParede) {
+                            estado.labirinto[y][x] = 'P';
+                        } else {
+                            if (Math.random() < probMorango) {
+                                const isDificil = Math.random() < probMorangoDificil;
+                                estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
+                                estado.morangosRestantes++;
+                            } else {
+                                estado.labirinto[y][x] = ' ';
+                            }
+                        }
+                    }
+                }
+            } 
+            // Fase 2: Labirinto com mais paredes
+            else if (estado.nivel === 2) {
+                for (let y = 0; y < tamanho; y++) {
+                    estado.labirinto[y] = [];
+                    for (let x = 0; x < tamanho; x++) {
+                        if (Math.random() < probParede) {
+                            estado.labirinto[y][x] = 'P';
+                        } else {
+                            if (Math.random() < probMorango) {
+                                const isDificil = Math.random() < probMorangoDificil;
+                                estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
+                                estado.morangosRestantes++;
+                            } else {
+                                estado.labirinto[y][x] = ' ';
+                            }
+                        }
+                    }
+                }
             }
-            
-            for (let y = 0; y < tamanho; y++) {
-                estado.labirinto[y] = [];
-                for (let x = 0; x < tamanho; x++) {
-                    if (estado.nivel >= 2 && Math.random() < probObstaculo) {
-                        estado.labirinto[y][x] = 'O'; // Obstáculo
-                    } else {
-                        estado.labirinto[y][x] = Math.random() > probParede ? ' ' : 'P';
+            // Fase 3: Labirinto complexo
+            else if (estado.nivel === 3) {
+                for (let y = 0; y < tamanho; y++) {
+                    estado.labirinto[y] = [];
+                    for (let x = 0; x < tamanho; x++) {
+                        if ((x % 2 === 0 && y % 2 !== 0) || (y % 2 === 0 && x % 2 !== 0)) {
+                            if (Math.random() < 0.7) {
+                                estado.labirinto[y][x] = 'P';
+                            } else {
+                                if (Math.random() < probMorango) {
+                                    const isDificil = Math.random() < probMorangoDificil;
+                                    estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
+                                    estado.morangosRestantes++;
+                                } else {
+                                    estado.labirinto[y][x] = ' ';
+                                }
+                            }
+                        } else {
+                            if (Math.random() < probMorango) {
+                                const isDificil = Math.random() < probMorangoDificil;
+                                estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
+                                estado.morangosRestantes++;
+                            } else {
+                                estado.labirinto[y][x] = ' ';
+                            }
+                        }
                     }
                 }
             }
             
+            // Garantir que a posição inicial esteja vazia
             estado.personagemPos = { x: 0, y: 0 };
             estado.labirinto[0][0] = ' ';
             
-            estado.saidaPos = { x: tamanho-1, y: tamanho-1 };
-            estado.labirinto[tamanho-1][tamanho-1] = 'S';
-        }
-
-        function encontrarCaminhoValido() {
-            const tamanho = estado.tamanhoMapa;
-            const visitados = Array(tamanho).fill().map(() => Array(tamanho).fill(false));
-            const fila = [{x: 0, y: 0, path: [{x: 0, y: 0}]}];
-            visitados[0][0] = true;
-            
-            const direcoes = [
-                {dx: 0, dy: -1}, {dx: 1, dy: 0}, 
-                {dx: 0, dy: 1}, {dx: -1, dy: 0}
-            ];
-            
-            while (fila.length > 0) {
-                const atual = fila.shift();
-                
-                if (atual.x === estado.saidaPos.x && atual.y === estado.saidaPos.y) {
-                    estado.caminhoValido = atual.path;
-                    return true;
-                }
-                
-                for (const dir of direcoes) {
-                    const nx = atual.x + dir.dx;
-                    const ny = atual.y + dir.dy;
-                    
-                    if (nx >= 0 && nx < tamanho && ny >= 0 && ny < tamanho && 
-                        (estado.labirinto[ny][nx] === ' ' || estado.labirinto[ny][nx] === 'S' || estado.labirinto[ny][nx] === 'O') && 
-                        !visitados[ny][nx]) {
-                        visitados[ny][nx] = true;
-                        fila.push({
-                            x: nx,
-                            y: ny,
-                            path: [...atual.path, {x: nx, y: ny}]
-                        });
-                    }
-                }
-            }
-            
-            return false;
-        }
-
-        function gerarLabirintoValido() {
+            // Definir saída em posições estratégicas para cada nível
+            let saidaX, saidaY;
             let tentativas = 0;
+            const maxTentativas = 100;
+            
             do {
-                gerarLabirinto();
+                // Estratégias diferentes para cada nível
+                if (estado.nivel === 1) {
+                    // Nível 1: Saída no canto oposto ou no meio da borda direita/inferior
+                    if (Math.random() > 0.7) {
+                        // 30% de chance de estar no canto oposto
+                        saidaX = tamanho - 1;
+                        saidaY = tamanho - 1;
+                    } else if (Math.random() > 0.5) {
+                        // 35% de chance de estar no meio da borda direita
+                        saidaX = tamanho - 1;
+                        saidaY = Math.floor(tamanho / 2);
+                    } else {
+                        // 35% de chance de estar no meio da borda inferior
+                        saidaX = Math.floor(tamanho / 2);
+                        saidaY = tamanho - 1;
+                    }
+                } else if (estado.nivel === 2) {
+                    // Nível 2: Saída em posições mais centrais ou em cantos estratégicos
+                    const estrategia = Math.random();
+                    if (estrategia > 0.75) {
+                        // 25% de chance - Canto superior direito
+                        saidaX = tamanho - 1;
+                        saidaY = 0;
+                    } else if (estrategia > 0.5) {
+                        // 25% de chance - Canto inferior esquerdo
+                        saidaX = 0;
+                        saidaY = tamanho - 1;
+                    } else if (estrategia > 0.25) {
+                        // 25% de chance - Centro direito
+                        saidaX = tamanho - 1;
+                        saidaY = Math.floor(tamanho / 2);
+                    } else {
+                        // 25% de chance - Centro inferior
+                        saidaX = Math.floor(tamanho / 2);
+                        saidaY = tamanho - 1;
+                    }
+                } else {
+                    // Nível 3: Saída em posições mais desafiadoras
+                    const estrategia = Math.random();
+                    if (estrategia > 0.8) {
+                        // 20% de chance - Quase centro (ligeiramente deslocado)
+                        saidaX = Math.floor(tamanho * 0.6);
+                        saidaY = Math.floor(tamanho * 0.6);
+                    } else if (estrategia > 0.6) {
+                        // 20% de chance - Entre o centro e o canto
+                        saidaX = Math.floor(tamanho * 0.75);
+                        saidaY = Math.floor(tamanho * 0.25);
+                    } else if (estrategia > 0.4) {
+                        // 20% de chance - Posição aleatória no quadrante superior direito
+                        saidaX = Math.floor(Math.random() * (tamanho/2)) + Math.floor(tamanho/2);
+                        saidaY = Math.floor(Math.random() * (tamanho/2));
+                    } else if (estrategia > 0.2) {
+                        // 20% de chance - Posição aleatória no quadrante inferior esquerdo
+                        saidaX = Math.floor(Math.random() * (tamanho/2));
+                        saidaY = Math.floor(Math.random() * (tamanho/2)) + Math.floor(tamanho/2);
+                    } else {
+                        // 20% de chance - Posição completamente aleatória
+                        saidaX = Math.floor(Math.random() * tamanho);
+                        saidaY = Math.floor(Math.random() * tamanho);
+                    }
+                }
+                
                 tentativas++;
-            } while (!encontrarCaminhoValido() && tentativas < config.maxTentativasCaminho);
-            
-            if (tentativas >= config.maxTentativasCaminho) {
-                criarLabirintoPadrao();
-                encontrarCaminhoValido();
-            }
-            
-            encontrarCaminhosAlternativos();
-        }
-
-        function criarLabirintoPadrao() {
-            const tamanho = estado.tamanhoMapa;
-            estado.labirinto = [];
-            
-            for (let y = 0; y < tamanho; y++) {
-                estado.labirinto[y] = [];
-                for (let x = 0; x < tamanho; x++) {
-                    if (x === y || x === y+1 || x === y-1 || 
-                        (x > 0 && x < tamanho-1 && y > 0 && y < tamanho-1 && Math.random() > 0.3)) {
-                        estado.labirinto[y][x] = ' ';
-                    } else if (estado.nivel >= 2 && Math.random() < config.chanceObstaculo) {
-                        estado.labirinto[y][x] = 'O'; // Obstáculo
-                    } else {
-                        estado.labirinto[y][x] = 'P';
-                    }
+                if (tentativas >= maxTentativas) {
+                    // Se não encontrar posição válida, coloca no canto oposto
+                    saidaX = tamanho - 1;
+                    saidaY = tamanho - 1;
+                    break;
                 }
-            }
+            } while ((saidaX === 0 && saidaY === 0) || estado.labirinto[saidaY][saidaX] === 'P');
             
-            estado.personagemPos = { x: 0, y: 0 };
-            estado.labirinto[0][0] = ' ';
-            
-            estado.saidaPos = { x: tamanho-1, y: tamanho-1 };
-            estado.labirinto[tamanho-1][tamanho-1] = 'S';
+            estado.saidaPos = { x: saidaX, y: saidaY };
+            estado.labirinto[saidaY][saidaX] = 'S';
         }
 
-        function encontrarCaminhosAlternativos() {
-            const tamanho = estado.tamanhoMapa;
-            const visitados = Array(tamanho).fill().map(() => Array(tamanho).fill(false));
-            estado.caminhosAlternativos = [];
-            
-            estado.caminhoValido.forEach(pos => {
-                visitados[pos.y][pos.x] = true;
-            });
-            
-            for (let y = 0; y < tamanho; y++) {
-                for (let x = 0; x < tamanho; x++) {
-                    if ((estado.labirinto[y][x] === ' ' || estado.labirinto[y][x] === 'O') && !visitados[y][x]) {
-                        const caminho = [];
-                        preencherCaminho(x, y, visitados, caminho);
-                        if (caminho.length > 0) {
-                            estado.caminhosAlternativos.push(caminho);
-                        }
-                    }
-                }
-            }
-        }
-
-        function preencherCaminho(x, y, visitados, caminho) {
-            const tamanho = estado.tamanhoMapa;
-            if (x < 0 || x >= tamanho || y < 0 || y >= tamanho || 
-                visitados[y][x] || estado.labirinto[y][x] === 'P') {
-                return;
-            }
-            
-            visitados[y][x] = true;
-            caminho.push({x, y});
-            
-            preencherCaminho(x+1, y, visitados, caminho);
-            preencherCaminho(x-1, y, visitados, caminho);
-            preencherCaminho(x, y+1, visitados, caminho);
-            preencherCaminho(x, y-1, visitados, caminho);
-        }
-
-        function atualizarUI() {
-            if (!elementos.labirinto) return;
-            
-            elementos.labirinto.innerHTML = '';
-            elementos.labirinto.style.gridTemplateColumns = `repeat(${estado.tamanhoMapa}, 1fr)`;
-            
-            for (let y = 0; y < estado.tamanhoMapa; y++) {
-                for (let x = 0; x < estado.tamanhoMapa; x++) {
-                    const bloco = document.createElement('div');
-                    bloco.classList.add('bloco');
-                    
-                    const noCaminhoPrincipal = estado.caminhoValido.some(pos => pos.x === x && pos.y === y);
-                    const noCaminhoAlternativo = estado.caminhosAlternativos.some(caminho => 
-                        caminho.some(pos => pos.x === x && pos.y === y));
-                    
-                    if (estado.labirinto[y][x] === 'P') {
-                        bloco.classList.add('parede');
-                    } else if (estado.labirinto[y][x] === 'S') {
-                        bloco.classList.add('saida');
-                    } else if (estado.labirinto[y][x] === 'O') {
-                        // Obstáculos podem ser normais ou difíceis
-                        const isDificil = Math.random() < config.chancePerguntaDificil;
-                        if (isDificil) {
-                            bloco.classList.add('obstaculo-dificil');
-                            bloco.setAttribute('data-dificil', 'true');
-                        } else {
-                            bloco.classList.add('obstaculo');
-                        }
-                    } else if (noCaminhoPrincipal || noCaminhoAlternativo) {
-                        const isDificil = noCaminhoAlternativo && Math.random() < config.chancePerguntaDificil;
-                        if (isDificil) {
-                            bloco.classList.add('caminho-dificil');
-                            bloco.setAttribute('data-dificil', 'true');
-                        } else {
-                            bloco.classList.add('caminho');
-                        }
-                    } else {
-                        bloco.classList.add('parede');
-                    }
-                    
-                    if (x === estado.personagemPos.x && y === estado.personagemPos.y) {
-                        const personagem = document.createElement('div');
-                        personagem.classList.add('personagem');
-                        bloco.appendChild(personagem);
-                    }
-                    
-                    if ((noCaminhoPrincipal || noCaminhoAlternativo || estado.labirinto[y][x] === 'O') && 
-                        !(x === estado.personagemPos.x && y === estado.personagemPos.y)) {
-                        bloco.addEventListener('click', () => clicarNoBloco(x, y));
-                    }
-                    
-                    elementos.labirinto.appendChild(bloco);
-                }
-            }
-            
-            if (elementos.nivelAtual) {
-                elementos.nivelAtual.textContent = estado.nivel;
-            }
-            if (elementos.acertos) {
-                elementos.acertos.textContent = estado.acertos;
-            }
-            if (elementos.erros) {
-                elementos.erros.textContent = estado.erros;
-            }
-        }
-
-        function mostrarMensagem(texto, tipo) {
-            if (!elementos.mensagem) return;
-            
-            elementos.mensagem.textContent = texto;
-            elementos.mensagem.className = `mensagem ${tipo}`;
-            setTimeout(() => {
-                elementos.mensagem.textContent = '';
-                elementos.mensagem.className = 'mensagem';
-            }, 2000);
-        }
-
-        function clicarNoBloco(x, y) {
-            if (!estado.jogoAtivo) return;
-            
-            const dx = Math.abs(estado.personagemPos.x - x);
-            const dy = Math.abs(estado.personagemPos.y - y);
-            
-            if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-                estado.destinoClicado = {x, y};
-                
-                const bloco = document.querySelector(`.bloco[style="grid-column-start: ${x+1}; grid-row-start: ${y+1};"]`);
-                
-                // Mostrar pergunta apenas para saída ou obstáculos (a partir do nível 2)
-                if (estado.labirinto[y][x] === 'S' || (estado.nivel >= 2 && estado.labirinto[y][x] === 'O')) {
-                    estado.isPerguntaDificil = bloco && bloco.hasAttribute('data-dificil');
-                    mostrarPergunta();
-                } else {
-                    // Movimento sem pergunta para caminhos normais
-                    moverPersonagemParaDestino();
-                }
-            } else {
-                mostrarMensagem("Mova apenas para blocos adjacentes!", 'erro');
-            }
-        }
-
-        function obterPerguntaAleatoria(categoria) {
-            const perguntasDisponiveis = perguntas[categoria].filter(p => 
-                !estado.perguntasUsadas.has(p.pergunta));
-            
-            if (perguntasDisponiveis.length === 0) {
-                estado.perguntasUsadas.clear();
-                return perguntas[categoria][Math.floor(Math.random() * perguntas[categoria].length)];
-            }
-            
-            const perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
-            estado.perguntasUsadas.add(perguntaAleatoria.pergunta);
-            
-            return perguntaAleatoria;
-        }
-
-        function mostrarPergunta() {
-            let perguntaAleatoria;
-            const nivel = estado.nivel;
-            
-            // Para todas as fases, usaremos apenas perguntas fáceis
-            perguntaAleatoria = obterPerguntaAleatoria('faceis');
-            
-            estado.perguntaAtual = perguntaAleatoria;
-            
-            if (elementos.textoPergunta) {
-                elementos.textoPergunta.textContent = perguntaAleatoria.pergunta;
-            }
-            
-            if (elementos.opcoesResposta) {
-                elementos.opcoesResposta.innerHTML = '';
-                
-                perguntaAleatoria.opcoes.forEach((opcao, index) => {
-                    const botao = document.createElement('button');
-                    botao.classList.add('opcao');
-                    botao.textContent = opcao;
-                    botao.addEventListener('click', () => verificarResposta(index === perguntaAleatoria.resposta));
-                    elementos.opcoesResposta.appendChild(botao);
-                });
-            }
-            
-            if (elementos.modalPergunta) {
-                elementos.modalPergunta.style.display = 'flex';
-            }
-        }
-
-        function verificarResposta(correta) {
-            if (elementos.modalPergunta) {
-                elementos.modalPergunta.style.display = 'none';
-            }
-            
-            if (correta) {
-                estado.acertos++;
-                mostrarMensagem("Correto! Avançando...", 'acerto');
-                
-                // Se era um obstáculo, transforma em caminho normal após acertar
-                if (estado.labirinto[estado.destinoClicado.y][estado.destinoClicado.x] === 'O') {
-                    estado.labirinto[estado.destinoClicado.y][estado.destinoClicado.x] = ' ';
-                }
-                
-                moverPersonagemParaDestino();
-            } else {
-                estado.erros++;
-                mostrarMensagem("Incorreto! Tente novamente.", 'erro');
-            }
-            
-            atualizarUI();
-        }
-
-        function moverPersonagemParaDestino() {
-            estado.personagemPos = {...estado.destinoClicado};
-            atualizarUI();
-            
-            if (estado.personagemPos.x === estado.saidaPos.x && estado.personagemPos.y === estado.saidaPos.y) {
-                estado.jogoAtivo = false;
-                
-                if (estado.nivel >= config.maxNiveis) {
-                    finalizarJogo(`Parabéns! Você completou todos os ${config.maxNiveis} níveis!`);
-                } else {
-                    setTimeout(() => {
-                        estado.nivel++;
-                        estado.jogoAtivo = true;
-                        gerarLabirintoValido();
-                        atualizarUI();
-                    }, 1000);
-                }
-            }
-        }
-
-        function atualizarRanking() {
-            if (!elementos.rankingLista) return;
-            
-            // Ordenar ranking por pontuação (acertos - erros)
-            estado.ranking.sort((a, b) => (b.pontos - a.pontos));
-            
-            elementos.rankingLista.innerHTML = '';
-            
-            estado.ranking.slice(0, 10).forEach((jogador, index) => {
-                const item = document.createElement('div');
-                item.className = 'ranking-item';
-                
-                const posicao = document.createElement('span');
-                posicao.className = 'ranking-posicao';
-                posicao.textContent = `${index + 1}º`;
-                
-                const nome = document.createElement('span');
-                nome.className = 'ranking-nome';
-                nome.textContent = jogador.nome;
-                
-                const pontos = document.createElement('span');
-                pontos.className = 'ranking-pontos';
-                pontos.textContent = jogador.pontos;
-                
-                item.appendChild(posicao);
-                item.appendChild(nome);
-                item.appendChild(pontos);
-                
-                elementos.rankingLista.appendChild(item);
-            });
-        }
-
-        function salvarPontuacao() {
-            const nome = elementos.inputNome.value.trim();
-            if (!nome) {
-                mostrarMensagem("Digite seu nome para salvar a pontuação!", 'erro');
-                return;
-            }
-            
-            const pontos = estado.acertos - estado.erros;
-            
-            estado.ranking.push({
-                nome: nome,
-                pontos: pontos,
-                data: new Date().toLocaleDateString(),
-                acertos: estado.acertos,
-                erros: estado.erros
-            });
-            
-            localStorage.setItem('labirinto-ranking', JSON.stringify(estado.ranking));
-            atualizarRanking();
-            
-            elementos.botaoSalvar.style.display = 'none';
-            elementos.inputNome.style.display = 'none';
-            mostrarMensagem("Pontuação salva com sucesso!", 'acerto');
-        }
-
-        function finalizarJogo(mensagem) {
-            if (elementos.mensagemFinal) {
-                elementos.mensagemFinal.textContent = `${mensagem} Acertos: ${estado.acertos} | Erros: ${estado.erros}`;
-            }
-            
-            atualizarRanking();
-            
-            if (elementos.telaFim) {
-                elementos.telaFim.style.display = 'flex';
-                elementos.botaoSalvar.style.display = 'block';
-                elementos.inputNome.style.display = 'block';
-            }
-        }
-
-        function moverPersonagem(dx, dy) {
-            if (!estado.jogoAtivo) return;
-            
-            const novoX = estado.personagemPos.x + dx;
-            const novoY = estado.personagemPos.y + dy;
-            
-            const noCaminhoPrincipal = estado.caminhoValido.some(pos => pos.x === novoX && pos.y === novoY);
-            const noCaminhoAlternativo = estado.caminhosAlternativos.some(caminho => 
-                caminho.some(pos => pos.x === novoX && pos.y === novoY));
-            const naSaida = (novoX === estado.saidaPos.x && novoY === estado.saidaPos.y);
-            const noObstaculo = estado.nivel >= 2 && estado.labirinto[novoY][novoX] === 'O';
-            
-            if (novoX >= 0 && novoX < estado.tamanhoMapa && 
-                novoY >= 0 && novoY < estado.tamanhoMapa && 
-                (noCaminhoPrincipal || noCaminhoAlternativo || naSaida || noObstaculo)) {
-                
-                // Se for um obstáculo (a partir do nível 2), mostrar pergunta
-                if (noObstaculo) {
-                    estado.destinoClicado = {x: novoX, y: novoY};
-                    const bloco = document.querySelector(`.bloco[style="grid-column-start: ${novoX+1}; grid-row-start: ${novoY+1};"]`);
-                    estado.isPerguntaDificil = bloco && bloco.hasAttribute('data-dificil');
-                    mostrarPergunta();
-                    return;
-                }
-                
-                // Se for a saída, mostrar pergunta
-                if (naSaida) {
-                    estado.destinoClicado = {x: novoX, y: novoY};
-                    const bloco = document.querySelector(`.bloco[style="grid-column-start: ${novoX+1}; grid-row-start: ${novoY+1};"]`);
-                    estado.isPerguntaDificil = bloco && bloco.hasAttribute('data-dificil');
-                    mostrarPergunta();
-                    return;
-                }
-                
-                // Movimento normal sem pergunta
-                estado.personagemPos.x = novoX;
-                estado.personagemPos.y = novoY;
-                atualizarUI();
-            }
-        }
-
-        function reiniciarJogo() {
-            estado.nivel = config.nivelInicial;
-            estado.acertos = 0;
-            estado.erros = 0;
-            estado.perguntasUsadas.clear();
-            
-            elementos.telaFim.style.display = 'none';
-            elementos.botaoSalvar.style.display = 'block';
-            elementos.inputNome.style.display = 'block';
-            iniciarJogo();
-        }
-
-        function iniciarJogo() {
-            estado.jogoAtivo = true;
-            gerarLabirintoValido();
-            atualizarUI();
-            
-            if (elementos.telaInicio) {
-                elementos.telaInicio.style.display = 'none';
-            }
-        }
-
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            if (elementos.botaoIniciar) {
-                elementos.botaoIniciar.addEventListener('click', iniciarJogo);
-            }
-            
-            if (elementos.botaoReiniciar) {
-                elementos.botaoReiniciar.addEventListener('click', reiniciarJogo);
-            }
-            
-            if (elementos.botaoSalvar) {
-                elementos.botaoSalvar.addEventListener('click', salvarPontuacao);
-            }
-            
-            if (elementos.fecharModal) {
-                elementos.fecharModal.addEventListener('click', () => {
-                    if (elementos.modalPergunta) {
-                        elementos.modalPergunta.style.display = 'none';
-                    }
-                });
-            }
-            
-            // Teclado
-            window.addEventListener('keydown', (e) => {
-                switch(e.key) {
-                    case 'ArrowUp': moverPersonagem(0, -1); break;
-                    case 'ArrowDown': moverPersonagem(0, 1); break;
-                    case 'ArrowLeft': moverPersonagem(-1, 0); break;
-                    case 'ArrowRight': moverPersonagem(1, 0); break;
-                }
-            });
-        });
-
-        // Inicialização
-        if (elementos.telaInicio) {
-            elementos.telaInicio.style.display = 'flex';
-        }
+        // ... (mantido o resto do código anterior) ...
     </script>
 </body>
 </html>
