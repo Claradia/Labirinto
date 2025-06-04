@@ -63,7 +63,7 @@
             gap: 10px;
         }
 
-        .info-nivel, .info-pontuacao, .info-morangos {
+        .info-nivel, .info-morangos {
             font-size: clamp(0.9rem, 3vw, 1rem);
             margin: 5px;
             min-width: 120px;
@@ -170,18 +170,6 @@
             background-color: var(--cor-caminho);
             border: 1px solid #d2b48c;
             position: relative;
-        }
-
-        .saida::after {
-            content: "🚪";
-            position: absolute;
-            font-size: 1.2em;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .saida:hover::after {
-            opacity: 1;
         }
 
         .mensagem {
@@ -344,56 +332,6 @@
             100% { transform: scale(1); opacity: 0.8; }
         }
 
-        .ranking {
-            margin-top: 20px;
-            width: 100%;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid var(--cor-primaria);
-            border-radius: 8px;
-            padding: 10px;
-            background-color: rgba(0,0,0,0.2);
-        }
-
-        .ranking h3 {
-            margin-bottom: 10px;
-            color: #f8f8f8;
-        }
-
-        .ranking-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: clamp(0.8rem, 3vw, 0.9rem);
-        }
-
-        .ranking-item:last-child {
-            border-bottom: none;
-        }
-
-        .ranking-posicao {
-            font-weight: bold;
-            margin-right: 10px;
-            color: #f8f8f8;
-        }
-
-        .ranking-nome {
-            flex-grow: 1;
-            text-align: left;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: #f8f8f8;
-        }
-
-        .ranking-pontos {
-            font-weight: bold;
-            color: #f8f8f8;
-            white-space: nowrap;
-            margin-left: 10px;
-        }
-
         .input-nome {
             width: 100%;
             padding: 10px;
@@ -451,7 +389,7 @@
         }
 
         @media (max-width: 350px) {
-            .info-nivel, .info-pontuacao, .info-morangos {
+            .info-nivel, .info-morangos {
                 min-width: 100px;
             }
         }
@@ -463,7 +401,6 @@
         <div class="info-container">
             <div class="info-nivel">Nível: <span id="nivel-atual">1</span></div>
             <div class="info-morangos">Morangos: <span id="morangos">0</span>/<span id="morangos-necessarios">3</span></div>
-            <div class="info-pontuacao">Pontos: <span id="pontos">0</span></div>
         </div>
     </div>
 
@@ -486,7 +423,7 @@
             <h2>Labirinto Geométrico</h2>
             <p>Ajude o Tigre a coletar morangos no labirinto!</p>
             <p>Use as teclas ou clique nos blocos adjacentes para se mover.</p>
-            <p>Cada morango contém uma pergunta que você precisa responder para ganhar pontos.</p>
+            <p>Cada morango contém uma pergunta que você precisa responder.</p>
             <p>Colete pelo menos 3 morangos em cada fase para poder avançar!</p>
             <p>Encontre a saída!</p>
             <button id="botao-iniciar" class="botao-iniciar">Iniciar Jogo</button>
@@ -497,12 +434,6 @@
         <div class="tela-conteudo">
             <h2>Parabéns!</h2>
             <p id="mensagem-final"></p>
-            <input type="text" id="input-nome" class="input-nome" placeholder="Digite seu nome" maxlength="20">
-            <button id="botao-salvar" class="botao-iniciar" style="margin-top: 10px;">Salvar Pontuação</button>
-            <div class="ranking" id="ranking">
-                <h3>Ranking</h3>
-                <div id="ranking-lista"></div>
-            </div>
             <div class="link-formulario">
                 <p>Por favor, responda nosso formulário:</p>
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLScmbEmPKw_0WoNDgfkxyGlhJPfaTYC6sRXc3YxKD90wJGxFlg/viewform?usp=header" 
@@ -536,7 +467,6 @@
             labirinto: document.getElementById('labirinto'),
             mensagem: document.getElementById('mensagem'),
             nivelAtual: document.getElementById('nivel-atual'),
-            pontos: document.getElementById('pontos'),
             morangos: document.getElementById('morangos'),
             morangosNecessarios: document.getElementById('morangos-necessarios'),
             modalPergunta: document.getElementById('modal-pergunta'),
@@ -546,11 +476,8 @@
             telaFim: document.getElementById('tela-fim'),
             botaoIniciar: document.getElementById('botao-iniciar'),
             botaoReiniciar: document.getElementById('botao-reiniciar'),
-            botaoSalvar: document.getElementById('botao-salvar'),
-            mensagemFinal: document.getElementById('mensagem-final'),
             fecharModal: document.querySelector('.fechar-modal'),
-            rankingLista: document.getElementById('ranking-lista'),
-            inputNome: document.getElementById('input-nome'),
+            mensagemFinal: document.getElementById('mensagem-final'),
             musicaFundo: document.getElementById('musica-fundo'),
             somPasso: document.getElementById('som-passo'),
             somMorango: document.getElementById('som-morango'),
@@ -567,63 +494,71 @@
             probabilidadeParede: [0.2, 0.3, 0.4],
             chanceMorango: [0.4, 0.3, 0.2],
             chanceMorangoDificil: [0.1, 0.2, 0.3],
-            pontosPorAcerto: 10,
-            pontosPorMorangoDificil: 20,
             minMorangosParaPassar: [3, 3, 3],
             isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
             volumeMusica: 0.3,
             volumeEfeitos: 0.5
         };
 
-        // Banco de perguntas
+        // Banco de perguntas com IDs únicos
         const perguntas = {
             faceis: [
                 {
+                    id: 1,
                     pergunta: "Quantas faces tem um cubo?",
                     opcoes: ["4", "6", "8", "10"],
                     resposta: 1
                 },
                 {
+                    id: 2,
                     pergunta: "Qual forma tem todas as faces triangulares?",
                     opcoes: ["Cubo", "Pirâmide", "Esfera", "Cilindro"],
                     resposta: 1
                 },
                 {
+                    id: 3,
                     pergunta: "Qual objeto tem formato de esfera?",
                     opcoes: ["Dado", "Bola", "Caixa", "Lata"],
                     resposta: 1
                 },
                 {
+                    id: 4,
                     pergunta: "Quantos vértices tem um cubo?",
                     opcoes: ["4", "6", "8", "12"],
                     resposta: 2
                 },
                 {
+                    id: 5,
                     pergunta: "Qual forma lembra uma lata de refrigerante?",
                     opcoes: ["Cubo", "Esfera", "Cilindro", "Pirâmide"],
                     resposta: 2
                 },
                 {
+                    id: 6,
                     pergunta: "Quantas arestas tem um cubo?",
                     opcoes: ["6", "8", "12", "14"],
                     resposta: 2
                 },
                 {
+                    id: 7,
                     pergunta: "Qual forma tem uma base circular e um vértice?",
                     opcoes: ["Cilindro", "Cone", "Esfera", "Pirâmide"],
                     resposta: 1
                 },
                 {
+                    id: 8,
                     pergunta: "Quantas faces tem uma pirâmide de base quadrada?",
                     opcoes: ["4", "5", "6", "8"],
                     resposta: 1
                 },
                 {
+                    id: 9,
                     pergunta: "Qual objeto tem formato de cilindro?",
                     opcoes: ["Bola", "Lata", "Dado", "Chapéu"],
                     resposta: 1
                 },
                 {
+                    id: 10,
                     pergunta: "Qual forma tem todas as faces quadradas?",
                     opcoes: ["Pirâmide", "Cubo", "Esfera", "Cone"],
                     resposta: 1
@@ -644,15 +579,15 @@
             caminhoValido: [],
             caminhosAlternativos: [],
             destinoClicado: null,
-            pontos: 0,
             morangosColetados: 0,
             totalMorangos: 0,
             perguntaAtual: null,
             isPerguntaDificil: false,
             perguntasUsadas: new Set(),
-            ranking: JSON.parse(localStorage.getItem('morangos-ranking')) || [],
             morangosRestantes: 0,
-            musicaLigada: false
+            musicaLigada: false,
+            perguntaAberta: false,
+            audioHabilitado: false
         };
 
         // Funções do jogo
@@ -866,7 +801,7 @@
                     if (estado.labirinto[y][x] === 'P') {
                         bloco.classList.add('parede');
                     } else if (estado.labirinto[y][x] === 'S') {
-                        bloco.classList.add('saida');
+                        bloco.classList.add('caminho');
                     } else if (estado.labirinto[y][x] === 'M') {
                         bloco.classList.add('morango');
                     } else if (estado.labirinto[y][x] === 'MD') {
@@ -878,6 +813,7 @@
                         bloco.classList.add('parede');
                     }
                     
+                    // Adicionar personagem na posição atual
                     if (x === estado.personagemPos.x && y === estado.personagemPos.y) {
                         const personagem = document.createElement('div');
                         personagem.classList.add('personagem');
@@ -896,7 +832,6 @@
             }
             
             elementos.nivelAtual.textContent = estado.nivel;
-            elementos.pontos.textContent = estado.pontos;
             elementos.morangos.textContent = estado.morangosColetados;
         }
 
@@ -910,7 +845,7 @@
         }
 
         function clicarNoBloco(x, y) {
-            if (!estado.jogoAtivo) return;
+            if (!estado.jogoAtivo || estado.perguntaAberta) return;
             
             const dx = Math.abs(estado.personagemPos.x - x);
             const dy = Math.abs(estado.personagemPos.y - y);
@@ -939,21 +874,32 @@
         }
 
         function obterPerguntaAleatoria(categoria) {
+            // Se já usamos todas as perguntas, limpe o conjunto e comece de novo
+            if (estado.perguntasUsadas.size >= perguntas[categoria].length) {
+                estado.perguntasUsadas.clear();
+            }
+
+            // Filtre as perguntas que ainda não foram usadas
             const perguntasDisponiveis = perguntas[categoria].filter(p => 
-                !estado.perguntasUsadas.has(p.pergunta));
-            
+                !estado.perguntasUsadas.has(p.id));
+
+            // Se não houver perguntas disponíveis (teoricamente não deveria acontecer devido à verificação acima)
             if (perguntasDisponiveis.length === 0) {
                 estado.perguntasUsadas.clear();
                 return perguntas[categoria][Math.floor(Math.random() * perguntas[categoria].length)];
             }
             
+            // Escolha uma pergunta aleatória entre as disponíveis
             const perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
-            estado.perguntasUsadas.add(perguntaAleatoria.pergunta);
+            
+            // Marque a pergunta como usada
+            estado.perguntasUsadas.add(perguntaAleatoria.id);
             
             return perguntaAleatoria;
         }
 
         function mostrarPergunta() {
+            estado.perguntaAberta = true;
             let perguntaAleatoria = obterPerguntaAleatoria('faceis');
             estado.perguntaAtual = perguntaAleatoria;
             
@@ -972,37 +918,25 @@
         }
 
         function verificarResposta(correta) {
+            estado.perguntaAberta = false;
             elementos.modalPergunta.style.display = 'none';
             
             const destino = estado.destinoClicado;
             const bloco = estado.labirinto[destino.y][destino.x];
             
             if (correta) {
-                let pontosGanhos = 0;
-                
-                if (bloco === 'M') {
-                    pontosGanhos = config.pontosPorAcerto;
+                if (bloco === 'M' || bloco === 'MD') {
                     estado.morangosColetados++;
                     estado.totalMorangos++;
                     estado.morangosRestantes--;
                     tocarSom(elementos.somMorango);
-                } else if (bloco === 'MD') {
-                    pontosGanhos = config.pontosPorMorangoDificil;
-                    estado.morangosColetados++;
-                    estado.totalMorangos++;
-                    estado.morangosRestantes--;
-                    tocarSom(elementos.somMorango);
-                } else if (bloco === 'S') {
-                    pontosGanhos = config.pontosPorAcerto * 2;
                 }
-                
-                estado.pontos += pontosGanhos;
                 
                 if (bloco === 'M' || bloco === 'MD') {
                     estado.labirinto[destino.y][destino.x] = ' ';
                 }
                 
-                mostrarMensagem(`Correto! +${pontosGanhos} pontos`, 'acerto');
+                mostrarMensagem("Correto!", 'acerto');
                 moverPersonagemParaDestino();
             } else {
                 mostrarMensagem("Incorreto! Tente novamente.", 'erro');
@@ -1043,112 +977,44 @@
 
         function tocarSom(elementoAudio) {
             try {
+                if (!estado.audioHabilitado) return;
+                
                 elementoAudio.volume = config.volumeEfeitos;
                 elementoAudio.currentTime = 0;
-                elementoAudio.play().catch(e => console.log("Erro ao reproduzir som:", e));
+                const promise = elementoAudio.play();
+                
+                if (promise !== undefined) {
+                    promise.catch(e => {
+                        console.log("Erro ao reproduzir som:", e);
+                    });
+                }
             } catch (e) {
                 console.log("Erro ao reproduzir som:", e);
             }
         }
 
         function toggleMusica() {
+            if (!estado.audioHabilitado) return;
+            
             if (estado.musicaLigada) {
                 elementos.musicaFundo.pause();
                 estado.musicaLigada = false;
             } else {
                 elementos.musicaFundo.volume = config.volumeMusica;
-                elementos.musicaFundo.play().catch(e => console.log("Erro ao reproduzir música:", e));
+                elementos.musicaFundo.play().catch(e => {
+                    console.log("Erro ao reproduzir música:", e);
+                });
                 estado.musicaLigada = true;
             }
         }
 
-        function atualizarRanking() {
-            // Ordenar por pontos (e depois por morangos como critério de desempate)
-            estado.ranking.sort((a, b) => {
-                if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-                return b.morangos - a.morangos;
-            });
-            
-            // Manter apenas as top 10 pontuações
-            if (estado.ranking.length > 10) {
-                estado.ranking = estado.ranking.slice(0, 10);
-            }
-            
-            elementos.rankingLista.innerHTML = '';
-            
-            estado.ranking.forEach((jogador, index) => {
-                const item = document.createElement('div');
-                item.className = 'ranking-item';
-                
-                const posicao = document.createElement('span');
-                posicao.className = 'ranking-posicao';
-                posicao.textContent = `${index + 1}º`;
-                
-                const nome = document.createElement('span');
-                nome.className = 'ranking-nome';
-                nome.textContent = jogador.nome;
-                
-                const pontos = document.createElement('span');
-                pontos.className = 'ranking-pontos';
-                pontos.textContent = `${jogador.pontos} pts (${jogador.morangos}🍓)`;
-                
-                item.appendChild(posicao);
-                item.appendChild(nome);
-                item.appendChild(pontos);
-                
-                elementos.rankingLista.appendChild(item);
-            });
-        }
-
-        function salvarPontuacao() {
-            const nome = elementos.inputNome.value.trim();
-            if (!nome) {
-                mostrarMensagem("Digite seu nome para salvar a pontuação!", 'erro');
-                return;
-            }
-            
-            // Adicionar nova pontuação ao ranking
-            estado.ranking.push({
-                nome: nome,
-                pontos: estado.pontos,
-                morangos: estado.totalMorangos,
-                nivel: estado.nivel,
-                data: new Date().toLocaleDateString()
-            });
-            
-            // Ordenar e manter apenas as top 10
-            estado.ranking.sort((a, b) => {
-                if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-                return b.morangos - a.morangos;
-            });
-            
-            if (estado.ranking.length > 10) {
-                estado.ranking = estado.ranking.slice(0, 10);
-            }
-            
-            // Salvar no localStorage
-            localStorage.setItem('morangos-ranking', JSON.stringify(estado.ranking));
-            
-            // Atualizar exibição
-            atualizarRanking();
-            
-            elementos.botaoSalvar.style.display = 'none';
-            elementos.inputNome.style.display = 'none';
-            mostrarMensagem("Pontuação salva com sucesso!", 'acerto');
-        }
-
         function finalizarJogo(mensagem) {
-            elementos.mensagemFinal.textContent = `${mensagem} Pontos: ${estado.pontos} | Morangos totais: ${estado.totalMorangos}`;
-            
-            atualizarRanking();
-            
+            elementos.mensagemFinal.textContent = `${mensagem} Morangos totais: ${estado.totalMorangos}`;
             elementos.telaFim.style.display = 'flex';
-            elementos.botaoSalvar.style.display = 'block';
-            elementos.inputNome.style.display = 'block';
         }
 
         function moverPersonagem(dx, dy) {
-            if (!estado.jogoAtivo) return;
+            if (!estado.jogoAtivo || estado.perguntaAberta) return;
             
             const novoX = estado.personagemPos.x + dx;
             const novoY = estado.personagemPos.y + dy;
@@ -1192,17 +1058,12 @@
 
         function reiniciarJogo() {
             estado.nivel = config.nivelInicial;
-            estado.pontos = 0;
             estado.morangosColetados = 0;
             estado.totalMorangos = 0;
             estado.perguntasUsadas.clear();
+            estado.perguntaAberta = false;
             
             elementos.telaFim.style.display = 'none';
-            elementos.botaoSalvar.style.display = 'block';
-            elementos.inputNome.style.display = 'block';
-            
-            // Reiniciar a música de fundo
-            toggleMusica();
             
             iniciarJogo();
         }
@@ -1210,39 +1071,71 @@
         function iniciarJogo() {
             estado.jogoAtivo = true;
             estado.nivel = 1;
-            estado.pontos = 0;
             estado.morangosColetados = 0;
             estado.totalMorangos = 0;
             estado.perguntasUsadas.clear();
+            estado.perguntaAberta = false;
             gerarLabirintoValido();
             atualizarUI();
             
             elementos.telaInicio.style.display = 'none';
-            
-            // Tocar música de fundo (se não estiver já tocando)
-            if (!estado.musicaLigada) {
-                toggleMusica();
-            }
             
             mostrarMensagem(`Fase 1: Colete ${config.minMorangosParaPassar[0]} morangos para avançar!`, 'acerto');
         }
 
         // Event listeners
         document.addEventListener('DOMContentLoaded', () => {
-            elementos.botaoIniciar.addEventListener('click', iniciarJogo);
+            // Configurar os elementos de áudio
+            elementos.musicaFundo.volume = config.volumeMusica;
+            elementos.somPasso.volume = config.volumeEfeitos;
+            elementos.somMorango.volume = config.volumeEfeitos;
+            elementos.somVitoria.volume = config.volumeEfeitos;
+            elementos.somFase.volume = config.volumeEfeitos;
+            
+            // Função para habilitar áudio quando o usuário interagir
+            const habilitarAudio = () => {
+                if (!estado.audioHabilitado) {
+                    estado.audioHabilitado = true;
+                    // Iniciar música de fundo
+                    elementos.musicaFundo.play().catch(e => {
+                        console.log("Erro ao reproduzir música:", e);
+                    });
+                    estado.musicaLigada = true;
+                }
+            };
+            
+            // Adicionar listeners para interação do usuário
+            document.addEventListener('click', habilitarAudio);
+            document.addEventListener('keydown', habilitarAudio);
+            document.addEventListener('touchstart', habilitarAudio);
+            
+            elementos.botaoIniciar.addEventListener('click', () => {
+                habilitarAudio();
+                iniciarJogo();
+            });
+            
             elementos.botaoReiniciar.addEventListener('click', reiniciarJogo);
-            elementos.botaoSalvar.addEventListener('click', salvarPontuacao);
             elementos.fecharModal.addEventListener('click', () => {
+                estado.perguntaAberta = false;
                 elementos.modalPergunta.style.display = 'none';
             });
             
             window.addEventListener('keydown', (e) => {
-                switch(e.key) {
-                    case 'ArrowUp': moverPersonagem(0, -1); break;
-                    case 'ArrowDown': moverPersonagem(0, 1); break;
-                    case 'ArrowLeft': moverPersonagem(-1, 0); break;
-                    case 'ArrowRight': moverPersonagem(1, 0); break;
-                    case 'm': toggleMusica(); break;
+                // Impedir navegação entre opções com as teclas de seta quando o modal está aberto
+                if (estado.perguntaAberta && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                    return;
+                }
+                
+                // Verificar se uma pergunta está aberta antes de mover o personagem
+                if (!estado.perguntaAberta) {
+                    switch(e.key) {
+                        case 'ArrowUp': moverPersonagem(0, -1); break;
+                        case 'ArrowDown': moverPersonagem(0, 1); break;
+                        case 'ArrowLeft': moverPersonagem(-1, 0); break;
+                        case 'ArrowRight': moverPersonagem(1, 0); break;
+                        case 'm': toggleMusica(); break;
+                    }
                 }
             });
 
@@ -1250,4 +1143,4 @@
         });
     </script>
 </body>
-</html>
+</html> 
