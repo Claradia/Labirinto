@@ -6,15 +6,656 @@
     <title>Labirinto Geométrico</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* ... (mantido o mesmo estilo anterior) ... */
+        :root {
+            --cor-fundo: #4a6b3a;
+            --cor-surface: #3a5a2a;
+            --cor-primaria: #8b4513;
+            --cor-secundaria: #f8f8f8;
+            --cor-texto: #ffffff;
+            --cor-caminho: #f5deb3;
+            --cor-caminho-dificil: #e6c9a8;
+            --tamanho-bloco: min(12vw, 60px);
+            --tamanho-bloco-min: 30px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .header {
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            background-color: var(--cor-surface);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            margin: 10px 0;
+            color: #fff;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        .info-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 5px 0;
+            gap: 10px;
+        }
+
+        .info-nivel, .info-pontuacao, .info-morangos {
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            margin: 5px;
+            min-width: 120px;
+            background-color: var(--cor-primaria);
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .labirinto-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            padding: 5px;
+            overflow: auto;
+            width: 100%;
+        }
+
+        .labirinto {
+            display: grid;
+            gap: 2px;
+            margin: 0 auto;
+            background-color: var(--cor-surface);
+            padding: 3px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            max-width: 100%;
+            max-height: 80vh;
+        }
+
+        .bloco {
+            width: var(--tamanho-bloco);
+            height: var(--tamanho-bloco);
+            min-width: var(--tamanho-bloco-min);
+            min-height: var(--tamanho-bloco-min);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            transition: all 0.2s;
+            cursor: pointer;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .caminho {
+            background-color: var(--cor-caminho);
+            border: 1px solid #d2b48c;
+        }
+
+        .caminho-dificil {
+            background-color: var(--cor-caminho-dificil);
+            border: 2px solid #c19a6b;
+        }
+
+        .parede {
+            background-color: #2a3a1a;
+            background-image: url('https://cdn-icons-png.flaticon.com/256/490/490091.png');
+            background-size: 70% 70%;
+            background-repeat: no-repeat;
+            background-position: center;
+            border: 1px solid #1b1b1b;
+            cursor: not-allowed;
+        }
+
+        .morango {
+            background-color: var(--cor-caminho);
+            border: 1px solid #d2b48c;
+        }
+
+        .morango::after {
+            content: "🍓";
+            position: absolute;
+            font-size: 1.5em;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        .morango-dificil {
+            background-color: var(--cor-caminho-dificil);
+            border: 2px solid #c19a6b;
+        }
+
+        .morango-dificil::after {
+            content: "🍓";
+            position: absolute;
+            font-size: 1.8em;
+            animation: pulse 1.2s infinite ease-in-out;
+        }
+
+        .personagem {
+            width: 90%;
+            height: 90%;
+            background-image: url('https://artpoin.com/wp-content/uploads/2023/12/artpoin-safari26.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.2s;
+        }
+
+        .saida {
+            background-color: var(--cor-caminho);
+            border: 1px solid #d2b48c;
+            position: relative;
+        }
+
+        .saida::after {
+            content: "🚪";
+            position: absolute;
+            font-size: 1.2em;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .saida:hover::after {
+            opacity: 1;
+        }
+
+        .mensagem {
+            margin: 10px 0;
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
+            min-height: 20px;
+            padding: 5px;
+            flex-shrink: 0;
+            background-color: var(--cor-surface);
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .mensagem.acerto {
+            color: #a8ffa8;
+            text-shadow: 0 0 3px #4caf50;
+        }
+
+        .mensagem.erro {
+            color: #ffa8a8;
+            text-shadow: 0 0 3px #f44336;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(2, 2, 2, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .modal-content {
+            background-color: var(--cor-surface);
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            margin: 10px;
+            border: 2px solid var(--cor-primaria);
+        }
+
+        .fechar-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--cor-texto);
+            cursor: pointer;
+        }
+
+        .pergunta {
+            font-size: clamp(1rem, 4vw, 1.1rem);
+            margin-bottom: 15px;
+            text-align: left;
+            color: #fff;
+            line-height: 1.4;
+        }
+
+        .opcoes-resposta {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .opcao {
+            padding: 12px;
+            background-color: var(--cor-primaria);
+            border: 1px solid var(--cor-primaria);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
+            text-align: center;
+            color: white;
+        }
+
+        .opcao:hover, .opcao:focus {
+            background-color: #a0522d;
+            transform: translateY(-2px);
+        }
+
+        .tela-inicio, .tela-fim {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .tela-conteudo {
+            background-color: var(--cor-surface);
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            margin: 10px;
+            border: 2px solid var(--cor-primaria);
+            text-align: center;
+        }
+
+        .tela-conteudo h2 {
+            color: #f8f8f8;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .tela-conteudo p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .botao-iniciar {
+            padding: 12px 24px;
+            background-color: var(--cor-primaria);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .botao-iniciar:active {
+            transform: scale(0.98);
+        }
+
+        .botao-iniciar:hover {
+            background-color: #a0522d;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .ranking {
+            margin-top: 20px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--cor-primaria);
+            border-radius: 8px;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        .ranking h3 {
+            margin-bottom: 10px;
+            color: #f8f8f8;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
+        }
+
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+
+        .ranking-posicao {
+            font-weight: bold;
+            margin-right: 10px;
+            color: #f8f8f8;
+        }
+
+        .ranking-nome {
+            flex-grow: 1;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #f8f8f8;
+        }
+
+        .ranking-pontos {
+            font-weight: bold;
+            color: #f8f8f8;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+
+        .input-nome {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--cor-primaria);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
+        }
+
+        .input-nome::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .link-formulario {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .link-formulario a {
+            color: #f8f8f8;
+            text-decoration: underline;
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
+        }
+
+        .link-formulario a:hover {
+            color: #d2b48c;
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            :root {
+                --tamanho-bloco: min(10vh, 60px);
+            }
+
+            .header {
+                margin-bottom: 5px;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+                margin: 5px 0;
+            }
+
+            .info-container {
+                margin: 2px 0;
+            }
+
+            .labirinto-container {
+                margin: 5px 0;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .info-nivel, .info-pontuacao, .info-morangos {
+                min-width: 100px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- ... (mantido o mesmo HTML anterior) ... -->
+    <div class="header">
+        <h1>Labirinto Geométrico</h1>
+        <div class="info-container">
+            <div class="info-nivel">Nível: <span id="nivel-atual">1</span></div>
+            <div class="info-morangos">Morangos: <span id="morangos">0</span>/<span id="morangos-necessarios">3</span></div>
+            <div class="info-pontuacao">Pontos: <span id="pontos">0</span></div>
+        </div>
+    </div>
+
+    <div class="labirinto-container">
+        <div id="labirinto" class="labirinto"></div>
+    </div>
+
+    <div id="mensagem" class="mensagem"></div>
+
+    <div id="modal-pergunta" class="modal">
+        <div class="modal-content">
+            <button class="fechar-modal">&times;</button>
+            <div id="texto-pergunta" class="pergunta"></div>
+            <div id="opcoes-resposta" class="opcoes-resposta"></div>
+        </div>
+    </div>
+
+    <div id="tela-inicio" class="tela-inicio">
+        <div class="tela-conteudo">
+            <h2>Labirinto Geométrico</h2>
+            <p>Ajude o Tigre a coletar morangos no labirinto!</p>
+            <p>Use as teclas ou clique nos blocos adjacentes para se mover.</p>
+            <p>Cada morango contém uma pergunta que você precisa responder para ganhar pontos.</p>
+            <p>Colete pelo menos 3 morangos em cada fase para poder avançar!</p>
+            <p>Encontre a saída!</p>
+            <button id="botao-iniciar" class="botao-iniciar">Iniciar Jogo</button>
+        </div>
+    </div>
+
+    <div id="tela-fim" class="tela-fim" style="display: none;">
+        <div class="tela-conteudo">
+            <h2>Parabéns!</h2>
+            <p id="mensagem-final"></p>
+            <input type="text" id="input-nome" class="input-nome" placeholder="Digite seu nome" maxlength="20">
+            <button id="botao-salvar" class="botao-iniciar" style="margin-top: 10px;">Salvar Pontuação</button>
+            <div class="ranking" id="ranking">
+                <h3>Ranking</h3>
+                <div id="ranking-lista"></div>
+            </div>
+            <div class="link-formulario">
+                <p>Por favor, responda nosso formulário:</p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScmbEmPKw_0WoNDgfkxyGlhJPfaTYC6sRXc3YxKD90wJGxFlg/viewform?usp=header" 
+                   target="_blank">
+                    Clique aqui para acessar o formulário
+                </a>
+            </div>
+            <button id="botao-reiniciar" class="botao-iniciar" style="margin-top: 10px;">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <audio id="musica-fundo" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="som-passo">
+        <source src="https://www.soundjay.com/buttons/sounds/button-09.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="som-morango">
+        <source src="https://www.soundjay.com/buttons/sounds/button-10.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="som-vitoria">
+        <source src="https://www.soundjay.com/buttons/sounds/button-21.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="som-fase">
+        <source src="https://www.soundjay.com/buttons/sounds/button-20.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
-        // ... (mantido o mesmo código anterior até a função gerarLabirinto) ...
+        // Elementos do DOM
+        const elementos = {
+            labirinto: document.getElementById('labirinto'),
+            mensagem: document.getElementById('mensagem'),
+            nivelAtual: document.getElementById('nivel-atual'),
+            pontos: document.getElementById('pontos'),
+            morangos: document.getElementById('morangos'),
+            morangosNecessarios: document.getElementById('morangos-necessarios'),
+            modalPergunta: document.getElementById('modal-pergunta'),
+            textoPergunta: document.getElementById('texto-pergunta'),
+            opcoesResposta: document.getElementById('opcoes-resposta'),
+            telaInicio: document.getElementById('tela-inicio'),
+            telaFim: document.getElementById('tela-fim'),
+            botaoIniciar: document.getElementById('botao-iniciar'),
+            botaoReiniciar: document.getElementById('botao-reiniciar'),
+            botaoSalvar: document.getElementById('botao-salvar'),
+            mensagemFinal: document.getElementById('mensagem-final'),
+            fecharModal: document.querySelector('.fechar-modal'),
+            rankingLista: document.getElementById('ranking-lista'),
+            inputNome: document.getElementById('input-nome'),
+            musicaFundo: document.getElementById('musica-fundo'),
+            somPasso: document.getElementById('som-passo'),
+            somMorango: document.getElementById('som-morango'),
+            somVitoria: document.getElementById('som-vitoria'),
+            somFase: document.getElementById('som-fase')
+        };
 
+        // Configurações do jogo
+        const config = {
+            nivelInicial: 1,
+            tamanhoInicial: 7,
+            maxNiveis: 3,
+            maxTentativasCaminho: 10,
+            probabilidadeParede: [0.2, 0.3, 0.4],
+            chanceMorango: [0.4, 0.3, 0.2],
+            chanceMorangoDificil: [0.1, 0.2, 0.3],
+            pontosPorAcerto: 10,
+            pontosPorMorangoDificil: 20,
+            minMorangosParaPassar: [3, 3, 3],
+            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            volumeMusica: 0.3,
+            volumeEfeitos: 0.5
+        };
+
+        // Banco de perguntas
+        const perguntas = {
+            faceis: [
+                {
+                    pergunta: "Quantas faces tem um cubo?",
+                    opcoes: ["4", "6", "8", "10"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual forma tem todas as faces triangulares?",
+                    opcoes: ["Cubo", "Pirâmide", "Esfera", "Cilindro"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual objeto tem formato de esfera?",
+                    opcoes: ["Dado", "Bola", "Caixa", "Lata"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantos vértices tem um cubo?",
+                    opcoes: ["4", "6", "8", "12"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma lembra uma lata de refrigerante?",
+                    opcoes: ["Cubo", "Esfera", "Cilindro", "Pirâmide"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Quantas arestas tem um cubo?",
+                    opcoes: ["6", "8", "12", "14"],
+                    resposta: 2
+                },
+                {
+                    pergunta: "Qual forma tem uma base circular e um vértice?",
+                    opcoes: ["Cilindro", "Cone", "Esfera", "Pirâmide"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Quantas faces tem uma pirâmide de base quadrada?",
+                    opcoes: ["4", "5", "6", "8"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual objeto tem formato de cilindro?",
+                    opcoes: ["Bola", "Lata", "Dado", "Chapéu"],
+                    resposta: 1
+                },
+                {
+                    pergunta: "Qual forma tem todas as faces quadradas?",
+                    opcoes: ["Pirâmide", "Cubo", "Esfera", "Cone"],
+                    resposta: 1
+                }
+            ],
+            medias: [],
+            dificeis: []
+        };
+
+        // Estado do jogo
+        const estado = {
+            nivel: config.nivelInicial,
+            tamanhoMapa: config.tamanhoInicial,
+            personagemPos: { x: 0, y: 0 },
+            saidaPos: { x: 0, y: 0 },
+            jogoAtivo: false,
+            labirinto: [],
+            caminhoValido: [],
+            caminhosAlternativos: [],
+            destinoClicado: null,
+            pontos: 0,
+            morangosColetados: 0,
+            totalMorangos: 0,
+            perguntaAtual: null,
+            isPerguntaDificil: false,
+            perguntasUsadas: new Set(),
+            ranking: JSON.parse(localStorage.getItem('morangos-ranking')) || [],
+            morangosRestantes: 0,
+            musicaLigada: false
+        };
+
+        // Funções do jogo
         function gerarLabirinto() {
             const tamanho = estado.tamanhoMapa;
             const nivelIndex = estado.nivel - 1;
@@ -25,169 +666,588 @@
             const probMorango = config.chanceMorango[nivelIndex];
             const probMorangoDificil = config.chanceMorangoDificil[nivelIndex];
             
-            // Fase 1: Labirinto simples
-            if (estado.nivel === 1) {
-                for (let y = 0; y < tamanho; y++) {
-                    estado.labirinto[y] = [];
-                    for (let x = 0; x < tamanho; x++) {
-                        // Garante um caminho principal diagonal
-                        if (x === y || x === y+1 || x === y-1) {
-                            if (Math.random() < probMorango) {
-                                const isDificil = Math.random() < probMorangoDificil;
-                                estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
-                                estado.morangosRestantes++;
-                            } else {
-                                estado.labirinto[y][x] = ' ';
-                            }
-                        } else if (Math.random() < probParede) {
-                            estado.labirinto[y][x] = 'P';
-                        } else {
-                            if (Math.random() < probMorango) {
-                                const isDificil = Math.random() < probMorangoDificil;
-                                estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
-                                estado.morangosRestantes++;
-                            } else {
-                                estado.labirinto[y][x] = ' ';
-                            }
-                        }
-                    }
-                }
-            } 
-            // Fase 2: Labirinto com mais paredes
-            else if (estado.nivel === 2) {
-                for (let y = 0; y < tamanho; y++) {
-                    estado.labirinto[y] = [];
-                    for (let x = 0; x < tamanho; x++) {
-                        if (Math.random() < probParede) {
-                            estado.labirinto[y][x] = 'P';
-                        } else {
-                            if (Math.random() < probMorango) {
-                                const isDificil = Math.random() < probMorangoDificil;
-                                estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
-                                estado.morangosRestantes++;
-                            } else {
-                                estado.labirinto[y][x] = ' ';
-                            }
-                        }
-                    }
-                }
-            }
-            // Fase 3: Labirinto complexo
-            else if (estado.nivel === 3) {
-                for (let y = 0; y < tamanho; y++) {
-                    estado.labirinto[y] = [];
-                    for (let x = 0; x < tamanho; x++) {
-                        if ((x % 2 === 0 && y % 2 !== 0) || (y % 2 === 0 && x % 2 !== 0)) {
-                            if (Math.random() < 0.7) {
-                                estado.labirinto[y][x] = 'P';
-                            } else {
-                                if (Math.random() < probMorango) {
-                                    const isDificil = Math.random() < probMorangoDificil;
-                                    estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
-                                    estado.morangosRestantes++;
-                                } else {
-                                    estado.labirinto[y][x] = ' ';
-                                }
-                            }
-                        } else {
-                            if (Math.random() < probMorango) {
-                                const isDificil = Math.random() < probMorangoDificil;
-                                estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
-                                estado.morangosRestantes++;
-                            } else {
-                                estado.labirinto[y][x] = ' ';
-                            }
-                        }
+            // Criar labirinto com caminhos principais
+            for (let y = 0; y < tamanho; y++) {
+                estado.labirinto[y] = [];
+                for (let x = 0; x < tamanho; x++) {
+                    // Garante caminhos em diagonal e adjacentes
+                    if (x === y || x === y+1 || x === y-1 || x+1 === y || x-1 === y) {
+                        estado.labirinto[y][x] = ' ';
+                    } else if (Math.random() < probParede) {
+                        estado.labirinto[y][x] = 'P';
+                    } else {
+                        estado.labirinto[y][x] = ' ';
                     }
                 }
             }
             
-            // Garantir que a posição inicial esteja vazia
+            // Posição inicial fixa no canto superior esquerdo
             estado.personagemPos = { x: 0, y: 0 };
             estado.labirinto[0][0] = ' ';
             
-            // Definir saída em posições estratégicas para cada nível
-            let saidaX, saidaY;
-            let tentativas = 0;
-            const maxTentativas = 100;
+            // GERAR SAÍDA EM POSIÇÃO ALEATÓRIA MAS ACESSÍVEL
+            const posicoesPossiveis = [];
             
-            do {
-                // Estratégias diferentes para cada nível
-                if (estado.nivel === 1) {
-                    // Nível 1: Saída no canto oposto ou no meio da borda direita/inferior
-                    if (Math.random() > 0.7) {
-                        // 30% de chance de estar no canto oposto
-                        saidaX = tamanho - 1;
-                        saidaY = tamanho - 1;
-                    } else if (Math.random() > 0.5) {
-                        // 35% de chance de estar no meio da borda direita
-                        saidaX = tamanho - 1;
-                        saidaY = Math.floor(tamanho / 2);
-                    } else {
-                        // 35% de chance de estar no meio da borda inferior
-                        saidaX = Math.floor(tamanho / 2);
-                        saidaY = tamanho - 1;
-                    }
-                } else if (estado.nivel === 2) {
-                    // Nível 2: Saída em posições mais centrais ou em cantos estratégicos
-                    const estrategia = Math.random();
-                    if (estrategia > 0.75) {
-                        // 25% de chance - Canto superior direito
-                        saidaX = tamanho - 1;
-                        saidaY = 0;
-                    } else if (estrategia > 0.5) {
-                        // 25% de chance - Canto inferior esquerdo
-                        saidaX = 0;
-                        saidaY = tamanho - 1;
-                    } else if (estrategia > 0.25) {
-                        // 25% de chance - Centro direito
-                        saidaX = tamanho - 1;
-                        saidaY = Math.floor(tamanho / 2);
-                    } else {
-                        // 25% de chance - Centro inferior
-                        saidaX = Math.floor(tamanho / 2);
-                        saidaY = tamanho - 1;
-                    }
-                } else {
-                    // Nível 3: Saída em posições mais desafiadoras
-                    const estrategia = Math.random();
-                    if (estrategia > 0.8) {
-                        // 20% de chance - Quase centro (ligeiramente deslocado)
-                        saidaX = Math.floor(tamanho * 0.6);
-                        saidaY = Math.floor(tamanho * 0.6);
-                    } else if (estrategia > 0.6) {
-                        // 20% de chance - Entre o centro e o canto
-                        saidaX = Math.floor(tamanho * 0.75);
-                        saidaY = Math.floor(tamanho * 0.25);
-                    } else if (estrategia > 0.4) {
-                        // 20% de chance - Posição aleatória no quadrante superior direito
-                        saidaX = Math.floor(Math.random() * (tamanho/2)) + Math.floor(tamanho/2);
-                        saidaY = Math.floor(Math.random() * (tamanho/2));
-                    } else if (estrategia > 0.2) {
-                        // 20% de chance - Posição aleatória no quadrante inferior esquerdo
-                        saidaX = Math.floor(Math.random() * (tamanho/2));
-                        saidaY = Math.floor(Math.random() * (tamanho/2)) + Math.floor(tamanho/2);
-                    } else {
-                        // 20% de chance - Posição completamente aleatória
-                        saidaX = Math.floor(Math.random() * tamanho);
-                        saidaY = Math.floor(Math.random() * tamanho);
+            // Coletar todas as posições válidas para saída
+            for (let y = 0; y < tamanho; y++) {
+                for (let x = 0; x < tamanho; x++) {
+                    // Não pode ser a posição inicial nem adjacente
+                    if ((x !== 0 || y !== 0) && 
+                        !(x <= 1 && y <= 1) && 
+                        estado.labirinto[y][x] === ' ') {
+                        posicoesPossiveis.push({x, y});
                     }
                 }
-                
-                tentativas++;
-                if (tentativas >= maxTentativas) {
-                    // Se não encontrar posição válida, coloca no canto oposto
-                    saidaX = tamanho - 1;
-                    saidaY = tamanho - 1;
-                    break;
-                }
-            } while ((saidaX === 0 && saidaY === 0) || estado.labirinto[saidaY][saidaX] === 'P');
+            }
             
-            estado.saidaPos = { x: saidaX, y: saidaY };
-            estado.labirinto[saidaY][saidaX] = 'S';
+            // Escolher posição aleatória para saída
+            if (posicoesPossiveis.length > 0) {
+                const posSaida = posicoesPossiveis[Math.floor(Math.random() * posicoesPossiveis.length)];
+                estado.saidaPos = { x: posSaida.x, y: posSaida.y };
+                estado.labirinto[posSaida.y][posSaida.x] = 'S';
+            } else {
+                // Fallback: canto inferior direito se não encontrar posição válida
+                estado.saidaPos = { x: tamanho-1, y: tamanho-1 };
+                estado.labirinto[tamanho-1][tamanho-1] = 'S';
+            }
+            
+            // Adicionar morangos em posições aleatórias
+            for (let y = 0; y < tamanho; y++) {
+                for (let x = 0; x < tamanho; x++) {
+                    if (estado.labirinto[y][x] === ' ' && !(x === 0 && y === 0)) {
+                        if (Math.random() < probMorango) {
+                            const isDificil = Math.random() < probMorangoDificil;
+                            estado.labirinto[y][x] = isDificil ? 'MD' : 'M';
+                            estado.morangosRestantes++;
+                        }
+                    }
+                }
+            }
         }
 
-        // ... (mantido o resto do código anterior) ...
+        function encontrarCaminhoValido() {
+            const tamanho = estado.tamanhoMapa;
+            const visitados = Array(tamanho).fill().map(() => Array(tamanho).fill(false));
+            const fila = [{x: 0, y: 0, path: [{x: 0, y: 0}]}];
+            visitados[0][0] = true;
+            
+            const direcoes = [
+                {dx: 0, dy: -1}, {dx: 1, dy: 0}, 
+                {dx: 0, dy: 1}, {dx: -1, dy: 0}
+            ];
+            
+            while (fila.length > 0) {
+                const atual = fila.shift();
+                
+                if (atual.x === estado.saidaPos.x && atual.y === estado.saidaPos.y) {
+                    estado.caminhoValido = atual.path;
+                    return true;
+                }
+                
+                for (const dir of direcoes) {
+                    const nx = atual.x + dir.dx;
+                    const ny = atual.y + dir.dy;
+                    
+                    if (nx >= 0 && nx < tamanho && ny >= 0 && ny < tamanho && 
+                        (estado.labirinto[ny][nx] === ' ' || estado.labirinto[ny][nx] === 'S' || 
+                         estado.labirinto[ny][nx] === 'M' || estado.labirinto[ny][nx] === 'MD') && 
+                        !visitados[ny][nx]) {
+                        visitados[ny][nx] = true;
+                        fila.push({
+                            x: nx,
+                            y: ny,
+                            path: [...atual.path, {x: nx, y: ny}]
+                        });
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        function gerarLabirintoValido() {
+            let tentativas = 0;
+            do {
+                gerarLabirinto();
+                tentativas++;
+            } while (!encontrarCaminhoValido() && tentativas < config.maxTentativasCaminho);
+            
+            if (tentativas >= config.maxTentativasCaminho) {
+                // Criar labirinto padrão se não conseguir gerar um válido
+                for (let y = 0; y < estado.tamanhoMapa; y++) {
+                    for (let x = 0; x < estado.tamanhoMapa; x++) {
+                        if (x === y || x === y+1 || x === y-1 || x+1 === y || x-1 === y) {
+                            estado.labirinto[y][x] = ' ';
+                        }
+                    }
+                }
+                estado.saidaPos = { x: estado.tamanhoMapa-1, y: estado.tamanhoMapa-1 };
+                estado.labirinto[estado.tamanhoMapa-1][estado.tamanhoMapa-1] = 'S';
+                encontrarCaminhoValido();
+            }
+            
+            // Garantir morangos suficientes
+            const minMorangos = config.minMorangosParaPassar[estado.nivel - 1];
+            if (estado.morangosRestantes < minMorangos) {
+                adicionarMorangosNoCaminho(minMorangos - estado.morangosRestantes);
+            }
+            
+            encontrarCaminhosAlternativos();
+            elementos.morangosNecessarios.textContent = minMorangos;
+        }
+
+        function adicionarMorangosNoCaminho(quantidade) {
+            const caminhoDisponivel = estado.caminhoValido.filter(pos => 
+                estado.labirinto[pos.y][pos.x] === ' ' && 
+                !(pos.x === estado.personagemPos.x && pos.y === estado.personagemPos.y) &&
+                !(pos.x === estado.saidaPos.x && pos.y === estado.saidaPos.y));
+            
+            const posicoesAleatorias = caminhoDisponivel
+                .sort(() => 0.5 - Math.random())
+                .slice(0, quantidade);
+            
+            posicoesAleatorias.forEach(pos => {
+                estado.labirinto[pos.y][pos.x] = 'M';
+                estado.morangosRestantes++;
+            });
+        }
+
+        function encontrarCaminhosAlternativos() {
+            const tamanho = estado.tamanhoMapa;
+            const visitados = Array(tamanho).fill().map(() => Array(tamanho).fill(false));
+            estado.caminhosAlternativos = [];
+            
+            estado.caminhoValido.forEach(pos => {
+                visitados[pos.y][pos.x] = true;
+            });
+            
+            for (let y = 0; y < tamanho; y++) {
+                for (let x = 0; x < tamanho; x++) {
+                    if ((estado.labirinto[y][x] === ' ' || estado.labirinto[y][x] === 'M' || estado.labirinto[y][x] === 'MD') && !visitados[y][x]) {
+                        const caminho = [];
+                        preencherCaminho(x, y, visitados, caminho);
+                        if (caminho.length > 0) {
+                            estado.caminhosAlternativos.push(caminho);
+                        }
+                    }
+                }
+            }
+        }
+
+        function preencherCaminho(x, y, visitados, caminho) {
+            const tamanho = estado.tamanhoMapa;
+            if (x < 0 || x >= tamanho || y < 0 || y >= tamanho || 
+                visitados[y][x] || estado.labirinto[y][x] === 'P') {
+                return;
+            }
+            
+            visitados[y][x] = true;
+            caminho.push({x, y});
+            
+            preencherCaminho(x+1, y, visitados, caminho);
+            preencherCaminho(x-1, y, visitados, caminho);
+            preencherCaminho(x, y+1, visitados, caminho);
+            preencherCaminho(x, y-1, visitados, caminho);
+        }
+
+        function atualizarUI() {
+            elementos.labirinto.innerHTML = '';
+            elementos.labirinto.style.gridTemplateColumns = `repeat(${estado.tamanhoMapa}, 1fr)`;
+            
+            for (let y = 0; y < estado.tamanhoMapa; y++) {
+                for (let x = 0; x < estado.tamanhoMapa; x++) {
+                    const bloco = document.createElement('div');
+                    bloco.classList.add('bloco');
+                    
+                    const noCaminhoPrincipal = estado.caminhoValido.some(pos => pos.x === x && pos.y === y);
+                    const noCaminhoAlternativo = estado.caminhosAlternativos.some(caminho => 
+                        caminho.some(pos => pos.x === x && pos.y === y));
+                    
+                    if (estado.labirinto[y][x] === 'P') {
+                        bloco.classList.add('parede');
+                    } else if (estado.labirinto[y][x] === 'S') {
+                        bloco.classList.add('saida');
+                    } else if (estado.labirinto[y][x] === 'M') {
+                        bloco.classList.add('morango');
+                    } else if (estado.labirinto[y][x] === 'MD') {
+                        bloco.classList.add('morango-dificil');
+                        bloco.setAttribute('data-dificil', 'true');
+                    } else if (noCaminhoPrincipal || noCaminhoAlternativo) {
+                        bloco.classList.add('caminho');
+                    } else {
+                        bloco.classList.add('parede');
+                    }
+                    
+                    if (x === estado.personagemPos.x && y === estado.personagemPos.y) {
+                        const personagem = document.createElement('div');
+                        personagem.classList.add('personagem');
+                        bloco.appendChild(personagem);
+                    }
+                    
+                    if ((noCaminhoPrincipal || noCaminhoAlternativo || 
+                         estado.labirinto[y][x] === 'M' || estado.labirinto[y][x] === 'MD' || 
+                         estado.labirinto[y][x] === 'S') && 
+                        !(x === estado.personagemPos.x && y === estado.personagemPos.y)) {
+                        bloco.addEventListener('click', () => clicarNoBloco(x, y));
+                    }
+                    
+                    elementos.labirinto.appendChild(bloco);
+                }
+            }
+            
+            elementos.nivelAtual.textContent = estado.nivel;
+            elementos.pontos.textContent = estado.pontos;
+            elementos.morangos.textContent = estado.morangosColetados;
+        }
+
+        function mostrarMensagem(texto, tipo) {
+            elementos.mensagem.textContent = texto;
+            elementos.mensagem.className = `mensagem ${tipo}`;
+            setTimeout(() => {
+                elementos.mensagem.textContent = '';
+                elementos.mensagem.className = 'mensagem';
+            }, 2000);
+        }
+
+        function clicarNoBloco(x, y) {
+            if (!estado.jogoAtivo) return;
+            
+            const dx = Math.abs(estado.personagemPos.x - x);
+            const dy = Math.abs(estado.personagemPos.y - y);
+            
+            if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                estado.destinoClicado = {x, y};
+                
+                if (estado.labirinto[y][x] === 'M' || estado.labirinto[y][x] === 'MD') {
+                    estado.isPerguntaDificil = estado.labirinto[y][x] === 'MD';
+                    mostrarPergunta();
+                } else if (estado.labirinto[y][x] === 'S') {
+                    const minMorangos = config.minMorangosParaPassar[estado.nivel - 1];
+                    if (estado.morangosColetados >= minMorangos) {
+                        estado.isPerguntaDificil = false;
+                        mostrarPergunta();
+                    } else {
+                        const faltam = minMorangos - estado.morangosColetados;
+                        mostrarMensagem(`Colete mais ${faltam} morango(s) para passar!`, 'erro');
+                    }
+                } else {
+                    moverPersonagemParaDestino();
+                }
+            } else {
+                mostrarMensagem("Mova apenas para blocos adjacentes!", 'erro');
+            }
+        }
+
+        function obterPerguntaAleatoria(categoria) {
+            const perguntasDisponiveis = perguntas[categoria].filter(p => 
+                !estado.perguntasUsadas.has(p.pergunta));
+            
+            if (perguntasDisponiveis.length === 0) {
+                estado.perguntasUsadas.clear();
+                return perguntas[categoria][Math.floor(Math.random() * perguntas[categoria].length)];
+            }
+            
+            const perguntaAleatoria = perguntasDisponiveis[Math.floor(Math.random() * perguntasDisponiveis.length)];
+            estado.perguntasUsadas.add(perguntaAleatoria.pergunta);
+            
+            return perguntaAleatoria;
+        }
+
+        function mostrarPergunta() {
+            let perguntaAleatoria = obterPerguntaAleatoria('faceis');
+            estado.perguntaAtual = perguntaAleatoria;
+            
+            elementos.textoPergunta.textContent = perguntaAleatoria.pergunta;
+            elementos.opcoesResposta.innerHTML = '';
+                
+            perguntaAleatoria.opcoes.forEach((opcao, index) => {
+                const botao = document.createElement('button');
+                botao.classList.add('opcao');
+                botao.textContent = opcao;
+                botao.addEventListener('click', () => verificarResposta(index === perguntaAleatoria.resposta));
+                elementos.opcoesResposta.appendChild(botao);
+            });
+            
+            elementos.modalPergunta.style.display = 'flex';
+        }
+
+        function verificarResposta(correta) {
+            elementos.modalPergunta.style.display = 'none';
+            
+            const destino = estado.destinoClicado;
+            const bloco = estado.labirinto[destino.y][destino.x];
+            
+            if (correta) {
+                let pontosGanhos = 0;
+                
+                if (bloco === 'M') {
+                    pontosGanhos = config.pontosPorAcerto;
+                    estado.morangosColetados++;
+                    estado.totalMorangos++;
+                    estado.morangosRestantes--;
+                    tocarSom(elementos.somMorango);
+                } else if (bloco === 'MD') {
+                    pontosGanhos = config.pontosPorMorangoDificil;
+                    estado.morangosColetados++;
+                    estado.totalMorangos++;
+                    estado.morangosRestantes--;
+                    tocarSom(elementos.somMorango);
+                } else if (bloco === 'S') {
+                    pontosGanhos = config.pontosPorAcerto * 2;
+                }
+                
+                estado.pontos += pontosGanhos;
+                
+                if (bloco === 'M' || bloco === 'MD') {
+                    estado.labirinto[destino.y][destino.x] = ' ';
+                }
+                
+                mostrarMensagem(`Correto! +${pontosGanhos} pontos`, 'acerto');
+                moverPersonagemParaDestino();
+            } else {
+                mostrarMensagem("Incorreto! Tente novamente.", 'erro');
+            }
+            
+            atualizarUI();
+        }
+
+        function moverPersonagemParaDestino() {
+            const destino = estado.destinoClicado;
+            estado.personagemPos = {...destino};
+            tocarSom(elementos.somPasso);
+            
+            if (estado.labirinto[destino.y][destino.x] === 'S') {
+                const minMorangos = config.minMorangosParaPassar[estado.nivel - 1];
+                if (estado.morangosColetados >= minMorangos) {
+                    estado.jogoAtivo = false;
+                    
+                    if (estado.nivel >= config.maxNiveis) {
+                        tocarSom(elementos.somVitoria);
+                        finalizarJogo(`Parabéns! Você completou todas as ${config.maxNiveis} fases!`);
+                    } else {
+                        tocarSom(elementos.somFase);
+                        setTimeout(() => {
+                            estado.nivel++;
+                            estado.morangosColetados = 0;
+                            estado.jogoAtivo = true;
+                            gerarLabirintoValido();
+                            atualizarUI();
+                            mostrarMensagem(`Fase ${estado.nivel}: Colete ${config.minMorangosParaPassar[estado.nivel - 1]} morangos para avançar!`, 'acerto');
+                        }, 1000);
+                    }
+                }
+            } else {
+                atualizarUI();
+            }
+        }
+
+        function tocarSom(elementoAudio) {
+            try {
+                elementoAudio.volume = config.volumeEfeitos;
+                elementoAudio.currentTime = 0;
+                elementoAudio.play().catch(e => console.log("Erro ao reproduzir som:", e));
+            } catch (e) {
+                console.log("Erro ao reproduzir som:", e);
+            }
+        }
+
+        function toggleMusica() {
+            if (estado.musicaLigada) {
+                elementos.musicaFundo.pause();
+                estado.musicaLigada = false;
+            } else {
+                elementos.musicaFundo.volume = config.volumeMusica;
+                elementos.musicaFundo.play().catch(e => console.log("Erro ao reproduzir música:", e));
+                estado.musicaLigada = true;
+            }
+        }
+
+        function atualizarRanking() {
+            // Ordenar por pontos (e depois por morangos como critério de desempate)
+            estado.ranking.sort((a, b) => {
+                if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+                return b.morangos - a.morangos;
+            });
+            
+            // Manter apenas as top 10 pontuações
+            if (estado.ranking.length > 10) {
+                estado.ranking = estado.ranking.slice(0, 10);
+            }
+            
+            elementos.rankingLista.innerHTML = '';
+            
+            estado.ranking.forEach((jogador, index) => {
+                const item = document.createElement('div');
+                item.className = 'ranking-item';
+                
+                const posicao = document.createElement('span');
+                posicao.className = 'ranking-posicao';
+                posicao.textContent = `${index + 1}º`;
+                
+                const nome = document.createElement('span');
+                nome.className = 'ranking-nome';
+                nome.textContent = jogador.nome;
+                
+                const pontos = document.createElement('span');
+                pontos.className = 'ranking-pontos';
+                pontos.textContent = `${jogador.pontos} pts (${jogador.morangos}🍓)`;
+                
+                item.appendChild(posicao);
+                item.appendChild(nome);
+                item.appendChild(pontos);
+                
+                elementos.rankingLista.appendChild(item);
+            });
+        }
+
+        function salvarPontuacao() {
+            const nome = elementos.inputNome.value.trim();
+            if (!nome) {
+                mostrarMensagem("Digite seu nome para salvar a pontuação!", 'erro');
+                return;
+            }
+            
+            // Adicionar nova pontuação ao ranking
+            estado.ranking.push({
+                nome: nome,
+                pontos: estado.pontos,
+                morangos: estado.totalMorangos,
+                nivel: estado.nivel,
+                data: new Date().toLocaleDateString()
+            });
+            
+            // Ordenar e manter apenas as top 10
+            estado.ranking.sort((a, b) => {
+                if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+                return b.morangos - a.morangos;
+            });
+            
+            if (estado.ranking.length > 10) {
+                estado.ranking = estado.ranking.slice(0, 10);
+            }
+            
+            // Salvar no localStorage
+            localStorage.setItem('morangos-ranking', JSON.stringify(estado.ranking));
+            
+            // Atualizar exibição
+            atualizarRanking();
+            
+            elementos.botaoSalvar.style.display = 'none';
+            elementos.inputNome.style.display = 'none';
+            mostrarMensagem("Pontuação salva com sucesso!", 'acerto');
+        }
+
+        function finalizarJogo(mensagem) {
+            elementos.mensagemFinal.textContent = `${mensagem} Pontos: ${estado.pontos} | Morangos totais: ${estado.totalMorangos}`;
+            
+            atualizarRanking();
+            
+            elementos.telaFim.style.display = 'flex';
+            elementos.botaoSalvar.style.display = 'block';
+            elementos.inputNome.style.display = 'block';
+        }
+
+        function moverPersonagem(dx, dy) {
+            if (!estado.jogoAtivo) return;
+            
+            const novoX = estado.personagemPos.x + dx;
+            const novoY = estado.personagemPos.y + dy;
+            
+            const noCaminhoPrincipal = estado.caminhoValido.some(pos => pos.x === novoX && pos.y === novoY);
+            const noCaminhoAlternativo = estado.caminhosAlternativos.some(caminho => 
+                caminho.some(pos => pos.x === novoX && pos.y === novoY));
+            const naSaida = (novoX === estado.saidaPos.x && novoY === estado.saidaPos.y);
+            const noMorango = estado.labirinto[novoY][novoX] === 'M' || estado.labirinto[novoY][novoX] === 'MD';
+            
+            if (novoX >= 0 && novoX < estado.tamanhoMapa && 
+                novoY >= 0 && novoY < estado.tamanhoMapa && 
+                (noCaminhoPrincipal || noCaminhoAlternativo || naSaida || noMorango)) {
+                
+                if (noMorango) {
+                    estado.destinoClicado = {x: novoX, y: novoY};
+                    estado.isPerguntaDificil = estado.labirinto[novoY][novoX] === 'MD';
+                    mostrarPergunta();
+                    return;
+                }
+                
+                if (naSaida) {
+                    const minMorangos = config.minMorangosParaPassar[estado.nivel - 1];
+                    if (estado.morangosColetados >= minMorangos) {
+                        estado.destinoClicado = {x: novoX, y: novoY};
+                        estado.isPerguntaDificil = false;
+                        mostrarPergunta();
+                    } else {
+                        const faltam = minMorangos - estado.morangosColetados;
+                        mostrarMensagem(`Colete mais ${faltam} morango(s) para passar!`, 'erro');
+                    }
+                    return;
+                }
+                
+                estado.personagemPos.x = novoX;
+                estado.personagemPos.y = novoY;
+                tocarSom(elementos.somPasso);
+                atualizarUI();
+            }
+        }
+
+        function reiniciarJogo() {
+            estado.nivel = config.nivelInicial;
+            estado.pontos = 0;
+            estado.morangosColetados = 0;
+            estado.totalMorangos = 0;
+            estado.perguntasUsadas.clear();
+            
+            elementos.telaFim.style.display = 'none';
+            elementos.botaoSalvar.style.display = 'block';
+            elementos.inputNome.style.display = 'block';
+            
+            // Reiniciar a música de fundo
+            toggleMusica();
+            
+            iniciarJogo();
+        }
+
+        function iniciarJogo() {
+            estado.jogoAtivo = true;
+            estado.nivel = 1;
+            estado.pontos = 0;
+            estado.morangosColetados = 0;
+            estado.totalMorangos = 0;
+            estado.perguntasUsadas.clear();
+            gerarLabirintoValido();
+            atualizarUI();
+            
+            elementos.telaInicio.style.display = 'none';
+            
+            // Tocar música de fundo (se não estiver já tocando)
+            if (!estado.musicaLigada) {
+                toggleMusica();
+            }
+            
+            mostrarMensagem(`Fase 1: Colete ${config.minMorangosParaPassar[0]} morangos para avançar!`, 'acerto');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            elementos.botaoIniciar.addEventListener('click', iniciarJogo);
+            elementos.botaoReiniciar.addEventListener('click', reiniciarJogo);
+            elementos.botaoSalvar.addEventListener('click', salvarPontuacao);
+            elementos.fecharModal.addEventListener('click', () => {
+                elementos.modalPergunta.style.display = 'none';
+            });
+            
+            window.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'ArrowUp': moverPersonagem(0, -1); break;
+                    case 'ArrowDown': moverPersonagem(0, 1); break;
+                    case 'ArrowLeft': moverPersonagem(-1, 0); break;
+                    case 'ArrowRight': moverPersonagem(1, 0); break;
+                    case 'm': toggleMusica(); break;
+                }
+            });
+
+            elementos.telaInicio.style.display = 'flex';
+        });
     </script>
 </body>
 </html>
