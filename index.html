@@ -1044,12 +1044,15 @@
                 elementos.somVitoria.volume = config.volumeEfeitos;
                 elementos.somFase.volume = config.volumeEfeitos;
                 
-                // Tentar iniciar a música de fundo
+                // Tentar iniciar a música imediatamente
                 const promise = elementos.musicaFundo.play();
                 
                 if (promise !== undefined) {
                     promise.catch(error => {
                         console.log("Reprodução automática bloqueada:", error);
+                        // Mostrar botão para permitir que o usuário inicie a música manualmente
+                        elementos.botaoMusica.textContent = '🔇';
+                        estado.musicaLigada = false;
                     }).then(() => {
                         estado.musicaLigada = true;
                         elementos.botaoMusica.textContent = '🔊';
@@ -1130,10 +1133,8 @@
             
             elementos.telaInicio.style.display = 'none';
             
-            // No mobile, tentamos iniciar a música automaticamente quando o jogo começa
-            if (config.isMobile) {
-                habilitarAudio();
-            }
+            // Habilitar o áudio automaticamente quando o jogo começar
+            habilitarAudio();
             
             mostrarMensagem(`Fase 1: Colete ${config.minMorangosParaPassar[0]} morangos para avançar!`, 'acerto');
         }
@@ -1153,24 +1154,13 @@
             // Tentar carregar a música antecipadamente
             elementos.musicaFundo.load();
 
-            // Função para habilitar áudio quando o usuário interagir
-            const habilitarAudioOnInteracao = () => {
+            // Tentar iniciar a música automaticamente (com tratamento de erro)
+            document.body.addEventListener('click', function habilitarAudioAutomatico() {
                 habilitarAudio();
-                // Remover os listeners após a primeira interação
-                document.removeEventListener('click', habilitarAudioOnInteracao);
-                document.removeEventListener('keydown', habilitarAudioOnInteracao);
-                document.removeEventListener('touchstart', habilitarAudioOnInteracao);
-            };
-            
-            // Adicionar listeners para interação do usuário
-            document.addEventListener('click', habilitarAudioOnInteracao);
-            document.addEventListener('keydown', habilitarAudioOnInteracao);
-            document.addEventListener('touchstart', habilitarAudioOnInteracao);
-            
-            elementos.botaoIniciar.addEventListener('click', () => {
-                habilitarAudio();
-                iniciarJogo();
-            });
+                document.body.removeEventListener('click', habilitarAudioAutomatico);
+            }, { once: true });
+
+            elementos.botaoIniciar.addEventListener('click', iniciarJogo);
             
             elementos.botaoReiniciar.addEventListener('click', reiniciarJogo);
             elementos.fecharModal.addEventListener('click', () => {
