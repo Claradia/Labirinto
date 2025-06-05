@@ -46,6 +46,7 @@
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
         }
 
         h1 {
@@ -326,6 +327,23 @@
             background-color: #a0522d;
         }
 
+        #botao-musica {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            outline: none;
+        }
+
+        #botao-musica:active {
+            transform: scale(0.9);
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); opacity: 0.8; }
             50% { transform: scale(1.1); opacity: 1; }
@@ -398,6 +416,7 @@
 <body>
     <div class="header">
         <h1>Labirinto Geométrico</h1>
+        <button id="botao-musica" style="display: none;">🔇</button>
         <div class="info-container">
             <div class="info-nivel">Nível: <span id="nivel-atual">1</span></div>
             <div class="info-morangos">Morangos: <span id="morangos">0</span>/<span id="morangos-necessarios">3</span></div>
@@ -482,7 +501,8 @@
             somPasso: document.getElementById('som-passo'),
             somMorango: document.getElementById('som-morango'),
             somVitoria: document.getElementById('som-vitoria'),
-            somFase: document.getElementById('som-fase')
+            somFase: document.getElementById('som-fase'),
+            botaoMusica: document.getElementById('botao-musica')
         };
 
         // Configurações do jogo
@@ -994,17 +1014,40 @@
         }
 
         function toggleMusica() {
-            if (!estado.audioHabilitado) return;
+            if (!estado.audioHabilitado) {
+                habilitarAudio();
+                return;
+            }
             
             if (estado.musicaLigada) {
                 elementos.musicaFundo.pause();
                 estado.musicaLigada = false;
+                elementos.botaoMusica.textContent = '🔇';
             } else {
-                elementos.musicaFundo.volume = config.volumeMusica;
                 elementos.musicaFundo.play().catch(e => {
                     console.log("Erro ao reproduzir música:", e);
                 });
                 estado.musicaLigada = true;
+                elementos.botaoMusica.textContent = '🔊';
+            }
+        }
+
+        function habilitarAudio() {
+            if (!estado.audioHabilitado) {
+                estado.audioHabilitado = true;
+                elementos.botaoMusica.style.display = 'block';
+                
+                // Tentar iniciar a música de fundo
+                const promise = elementos.musicaFundo.play();
+                
+                if (promise !== undefined) {
+                    promise.catch(error => {
+                        console.log("Reprodução automática bloqueada:", error);
+                    }).then(() => {
+                        estado.musicaLigada = true;
+                        elementos.botaoMusica.textContent = '🔊';
+                    });
+                }
             }
         }
 
@@ -1092,22 +1135,25 @@
             elementos.somVitoria.volume = config.volumeEfeitos;
             elementos.somFase.volume = config.volumeEfeitos;
             
+            // Configurar loop para a música de fundo
+            elementos.musicaFundo.loop = true;
+            
+            // Tentar carregar a música antecipadamente
+            elementos.musicaFundo.load();
+
             // Função para habilitar áudio quando o usuário interagir
-            const habilitarAudio = () => {
-                if (!estado.audioHabilitado) {
-                    estado.audioHabilitado = true;
-                    // Iniciar música de fundo
-                    elementos.musicaFundo.play().catch(e => {
-                        console.log("Erro ao reproduzir música:", e);
-                    });
-                    estado.musicaLigada = true;
-                }
+            const habilitarAudioOnInteracao = () => {
+                habilitarAudio();
+                // Remover os listeners após a primeira interação
+                document.removeEventListener('click', habilitarAudioOnInteracao);
+                document.removeEventListener('keydown', habilitarAudioOnInteracao);
+                document.removeEventListener('touchstart', habilitarAudioOnInteracao);
             };
             
             // Adicionar listeners para interação do usuário
-            document.addEventListener('click', habilitarAudio);
-            document.addEventListener('keydown', habilitarAudio);
-            document.addEventListener('touchstart', habilitarAudio);
+            document.addEventListener('click', habilitarAudioOnInteracao);
+            document.addEventListener('keydown', habilitarAudioOnInteracao);
+            document.addEventListener('touchstart', habilitarAudioOnInteracao);
             
             elementos.botaoIniciar.addEventListener('click', () => {
                 habilitarAudio();
@@ -1119,6 +1165,8 @@
                 estado.perguntaAberta = false;
                 elementos.modalPergunta.style.display = 'none';
             });
+            
+            elementos.botaoMusica.addEventListener('click', toggleMusica);
             
             window.addEventListener('keydown', (e) => {
                 // Impedir navegação entre opções com as teclas de seta quando o modal está aberto
@@ -1143,4 +1191,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
