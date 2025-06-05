@@ -1037,6 +1037,13 @@
                 estado.audioHabilitado = true;
                 elementos.botaoMusica.style.display = 'block';
                 
+                // Configurar volumes
+                elementos.musicaFundo.volume = config.volumeMusica;
+                elementos.somPasso.volume = config.volumeEfeitos;
+                elementos.somMorango.volume = config.volumeEfeitos;
+                elementos.somVitoria.volume = config.volumeEfeitos;
+                elementos.somFase.volume = config.volumeEfeitos;
+                
                 // Tentar iniciar a música de fundo
                 const promise = elementos.musicaFundo.play();
                 
@@ -1122,6 +1129,11 @@
             atualizarUI();
             
             elementos.telaInicio.style.display = 'none';
+            
+            // No mobile, tentamos iniciar a música automaticamente quando o jogo começa
+            if (config.isMobile) {
+                habilitarAudio();
+            }
             
             mostrarMensagem(`Fase 1: Colete ${config.minMorangosParaPassar[0]} morangos para avançar!`, 'acerto');
         }
