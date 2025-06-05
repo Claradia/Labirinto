@@ -64,7 +64,7 @@
             gap: 10px;
         }
 
-        .info-nivel, .info-morangos {
+        .info-nivel, .info-morangos, .info-tempo {
             font-size: clamp(0.9rem, 3vw, 1rem);
             margin: 5px;
             min-width: 120px;
@@ -383,6 +383,53 @@
             color: #d2b48c;
         }
 
+        .ranking-container {
+            width: 100%;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--cor-primaria);
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .ranking-titulo {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--cor-caminho);
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ranking-item:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .ranking-posicao {
+            font-weight: bold;
+            color: var(--cor-caminho);
+        }
+
+        .ranking-nome {
+            flex-grow: 1;
+            text-align: left;
+            padding-left: 10px;
+        }
+
+        .ranking-tempo {
+            color: var(--cor-caminho);
+        }
+
+        .ranking-voce {
+            background-color: rgba(139, 69, 19, 0.3) !important;
+            font-weight: bold;
+        }
+
         @media (max-height: 500px) and (orientation: landscape) {
             :root {
                 --tamanho-bloco: min(10vh, 60px);
@@ -407,7 +454,7 @@
         }
 
         @media (max-width: 350px) {
-            .info-nivel, .info-morangos {
+            .info-nivel, .info-morangos, .info-tempo {
                 min-width: 100px;
             }
         }
@@ -420,6 +467,7 @@
         <div class="info-container">
             <div class="info-nivel">Nível: <span id="nivel-atual">1</span></div>
             <div class="info-morangos">Morangos: <span id="morangos">0</span>/<span id="morangos-necessarios">3</span></div>
+            <div class="info-tempo">Tempo: <span id="tempo-jogo">00:00</span></div>
         </div>
     </div>
 
@@ -453,6 +501,11 @@
         <div class="tela-conteudo">
             <h2>Parabéns!</h2>
             <p id="mensagem-final"></p>
+            <div id="ranking-container" class="ranking-container">
+                <div class="ranking-titulo">Top 10 Melhores Tempos</div>
+                <div id="ranking-lista"></div>
+            </div>
+            <input type="text" id="input-nome" class="input-nome" placeholder="Digite seu nome" maxlength="20">
             <div class="link-formulario">
                 <p>Por favor, responda nosso formulário:</p>
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLScmbEmPKw_0WoNDgfkxyGlhJPfaTYC6sRXc3YxKD90wJGxFlg/viewform?usp=header" 
@@ -488,6 +541,7 @@
             nivelAtual: document.getElementById('nivel-atual'),
             morangos: document.getElementById('morangos'),
             morangosNecessarios: document.getElementById('morangos-necessarios'),
+            tempoJogo: document.getElementById('tempo-jogo'),
             modalPergunta: document.getElementById('modal-pergunta'),
             textoPergunta: document.getElementById('texto-pergunta'),
             opcoesResposta: document.getElementById('opcoes-resposta'),
@@ -502,7 +556,10 @@
             somMorango: document.getElementById('som-morango'),
             somVitoria: document.getElementById('som-vitoria'),
             somFase: document.getElementById('som-fase'),
-            botaoMusica: document.getElementById('botao-musica')
+            botaoMusica: document.getElementById('botao-musica'),
+            inputNome: document.getElementById('input-nome'),
+            rankingLista: document.getElementById('ranking-lista'),
+            rankingContainer: document.getElementById('ranking-container')
         };
 
         // Configurações do jogo
@@ -517,7 +574,9 @@
             minMorangosParaPassar: [3, 3, 3],
             isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
             volumeMusica: 0.3,
-            volumeEfeitos: 0.5
+            volumeEfeitos: 0.5,
+            rankingKey: 'labirintoGeometricoRanking',
+            maxRankingEntries: 10
         };
 
         // Banco de perguntas com IDs únicos
@@ -607,7 +666,11 @@
             morangosRestantes: 0,
             musicaLigada: false,
             perguntaAberta: false,
-            audioHabilitado: false
+            audioHabilitado: false,
+            tempoInicio: 0,
+            tempoDecorrido: 0,
+            intervaloRelogio: null,
+            ranking: []
         };
 
         // Funções do jogo
@@ -821,7 +884,7 @@
                     if (estado.labirinto[y][x] === 'P') {
                         bloco.classList.add('parede');
                     } else if (estado.labirinto[y][x] === 'S') {
-                        bloco.classList.add('caminho');
+                        bloco.classList.add('saida');
                     } else if (estado.labirinto[y][x] === 'M') {
                         bloco.classList.add('morango');
                     } else if (estado.labirinto[y][x] === 'MD') {
@@ -1061,9 +1124,137 @@
             }
         }
 
+        function formatarTempo(segundos) {
+            const mins = Math.floor(segundos / 60);
+            const secs = Math.floor(segundos % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function atualizarRelogio() {
+            const tempoAtual = Math.floor((Date.now() - estado.tempoInicio) / 1000) + estado.tempoDecorrido;
+            elementos.tempoJogo.textContent = formatarTempo(tempoAtual);
+        }
+
+        function iniciarRelogio() {
+            estado.tempoInicio = Date.now();
+            estado.tempoDecorrido = 0;
+            clearInterval(estado.intervaloRelogio);
+            estado.intervaloRelogio = setInterval(atualizarRelogio, 1000);
+        }
+
+        function pausarRelogio() {
+            if (estado.tempoInicio) {
+                estado.tempoDecorrido += Math.floor((Date.now() - estado.tempoInicio) / 1000);
+                estado.tempoInicio = 0;
+            }
+            clearInterval(estado.intervaloRelogio);
+        }
+
+        function obterTempoAtual() {
+            if (estado.tempoInicio) {
+                return estado.tempoDecorrido + Math.floor((Date.now() - estado.tempoInicio) / 1000);
+            }
+            return estado.tempoDecorrido;
+        }
+
+        function carregarRanking() {
+            const rankingSalvo = localStorage.getItem(config.rankingKey);
+            if (rankingSalvo) {
+                estado.ranking = JSON.parse(rankingSalvo);
+            } else {
+                estado.ranking = [];
+            }
+        }
+
+        function salvarRanking() {
+            localStorage.setItem(config.rankingKey, JSON.stringify(estado.ranking));
+        }
+
+        function adicionarAoRanking(nome, tempo) {
+            // Verificar se o nome já existe no ranking
+            const entradaExistenteIndex = estado.ranking.findIndex(entry => entry.nome === nome);
+            
+            if (entradaExistenteIndex !== -1) {
+                // Se o novo tempo for melhor, atualiza
+                if (tempo < estado.ranking[entradaExistenteIndex].tempo) {
+                    estado.ranking[entradaExistenteIndex].tempo = tempo;
+                }
+            } else {
+                // Adiciona nova entrada
+                estado.ranking.push({ nome, tempo });
+            }
+            
+            // Ordenar por tempo crescente
+            estado.ranking.sort((a, b) => a.tempo - b.tempo);
+            
+            // Manter apenas os top 10
+            if (estado.ranking.length > config.maxRankingEntries) {
+                estado.ranking = estado.ranking.slice(0, config.maxRankingEntries);
+            }
+            
+            salvarRanking();
+        }
+
+        function exibirRanking(nomeAtual = '') {
+            elementos.rankingLista.innerHTML = '';
+            
+            if (estado.ranking.length === 0) {
+                const item = document.createElement('div');
+                item.textContent = 'Nenhum recorde ainda!';
+                elementos.rankingLista.appendChild(item);
+                return;
+            }
+            
+            estado.ranking.forEach((entry, index) => {
+                const item = document.createElement('div');
+                item.className = `ranking-item ${entry.nome === nomeAtual ? 'ranking-voce' : ''}`;
+                
+                const posicao = document.createElement('span');
+                posicao.className = 'ranking-posicao';
+                posicao.textContent = `${index + 1}º`;
+                
+                const nome = document.createElement('span');
+                nome.className = 'ranking-nome';
+                nome.textContent = entry.nome;
+                
+                const tempo = document.createElement('span');
+                tempo.className = 'ranking-tempo';
+                tempo.textContent = formatarTempo(entry.tempo);
+                
+                item.appendChild(posicao);
+                item.appendChild(nome);
+                item.appendChild(tempo);
+                
+                elementos.rankingLista.appendChild(item);
+            });
+        }
+
         function finalizarJogo(mensagem) {
-            elementos.mensagemFinal.textContent = `${mensagem} Morangos totais: ${estado.totalMorangos}`;
+            pausarRelogio();
+            const tempoTotal = obterTempoAtual();
+            
+            elementos.mensagemFinal.textContent = `${mensagem} Tempo total: ${formatarTempo(tempoTotal)} | Morangos: ${estado.totalMorangos}`;
             elementos.telaFim.style.display = 'flex';
+            
+            // Exibir ranking
+            carregarRanking();
+            exibirRanking();
+            
+            // Configurar input de nome
+            elementos.inputNome.value = '';
+            elementos.inputNome.focus();
+            
+            // Adicionar evento para salvar nome quando pressionar Enter
+            elementos.inputNome.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const nome = elementos.inputNome.value.trim();
+                    if (nome) {
+                        adicionarAoRanking(nome, tempoTotal);
+                        exibirRanking(nome);
+                        elementos.inputNome.style.display = 'none';
+                    }
+                }
+            });
         }
 
         function moverPersonagem(dx, dy) {
@@ -1117,6 +1308,7 @@
             estado.perguntaAberta = false;
             
             elementos.telaFim.style.display = 'none';
+            elementos.inputNome.style.display = 'block';
             
             iniciarJogo();
         }
@@ -1132,6 +1324,9 @@
             atualizarUI();
             
             elementos.telaInicio.style.display = 'none';
+            
+            // Iniciar relógio
+            iniciarRelogio();
             
             // Habilitar o áudio automaticamente quando o jogo começar
             habilitarAudio();
