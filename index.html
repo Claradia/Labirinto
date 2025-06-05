@@ -430,6 +430,22 @@
             font-weight: bold;
         }
 
+        .botao-salvar {
+            padding: 8px 16px;
+            background-color: var(--cor-primaria);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .botao-salvar:hover {
+            background-color: #a0522d;
+        }
+
         @media (max-height: 500px) and (orientation: landscape) {
             :root {
                 --tamanho-bloco: min(10vh, 60px);
@@ -492,7 +508,7 @@
             <p>Use as teclas ou clique nos blocos adjacentes para se mover.</p>
             <p>Cada morango contém uma pergunta que você precisa responder.</p>
             <p>Colete pelo menos 3 morangos em cada fase para poder avançar!</p>
-            <p>Encontre a saída!</p>
+            <p>Encontre a saída nos blocos que não tem morango!</p>
             <button id="botao-iniciar" class="botao-iniciar">Iniciar Jogo</button>
         </div>
     </div>
@@ -506,6 +522,7 @@
                 <div id="ranking-lista"></div>
             </div>
             <input type="text" id="input-nome" class="input-nome" placeholder="Digite seu nome" maxlength="20">
+            <button id="botao-salvar" class="botao-salvar">Salvar</button>
             <div class="link-formulario">
                 <p>Por favor, responda nosso formulário:</p>
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLScmbEmPKw_0WoNDgfkxyGlhJPfaTYC6sRXc3YxKD90wJGxFlg/viewform?usp=header" 
@@ -549,6 +566,7 @@
             telaFim: document.getElementById('tela-fim'),
             botaoIniciar: document.getElementById('botao-iniciar'),
             botaoReiniciar: document.getElementById('botao-reiniciar'),
+            botaoSalvar: document.getElementById('botao-salvar'),
             fecharModal: document.querySelector('.fechar-modal'),
             mensagemFinal: document.getElementById('mensagem-final'),
             musicaFundo: document.getElementById('musica-fundo'),
@@ -1243,18 +1261,17 @@
             // Configurar input de nome
             elementos.inputNome.value = '';
             elementos.inputNome.focus();
-            
-            // Adicionar evento para salvar nome quando pressionar Enter
-            elementos.inputNome.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    const nome = elementos.inputNome.value.trim();
-                    if (nome) {
-                        adicionarAoRanking(nome, tempoTotal);
-                        exibirRanking(nome);
-                        elementos.inputNome.style.display = 'none';
-                    }
-                }
-            });
+        }
+
+        function salvarNome() {
+            const nome = elementos.inputNome.value.trim();
+            if (nome) {
+                const tempoTotal = obterTempoAtual();
+                adicionarAoRanking(nome, tempoTotal);
+                exibirRanking(nome);
+                elementos.inputNome.style.display = 'none';
+                elementos.botaoSalvar.style.display = 'none';
+            }
         }
 
         function moverPersonagem(dx, dy) {
@@ -1309,6 +1326,7 @@
             
             elementos.telaFim.style.display = 'none';
             elementos.inputNome.style.display = 'block';
+            elementos.botaoSalvar.style.display = 'block';
             
             iniciarJogo();
         }
@@ -1358,6 +1376,7 @@
             elementos.botaoIniciar.addEventListener('click', iniciarJogo);
             
             elementos.botaoReiniciar.addEventListener('click', reiniciarJogo);
+            elementos.botaoSalvar.addEventListener('click', salvarNome);
             elementos.fecharModal.addEventListener('click', () => {
                 estado.perguntaAberta = false;
                 elementos.modalPergunta.style.display = 'none';
